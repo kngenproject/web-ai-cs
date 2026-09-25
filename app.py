@@ -1,20 +1,23 @@
 from flask import Flask, render_template, request, jsonify
 import os
 import glob
-from google import genai
+from openai import OpenAI
 
 app = Flask(__name__)
 
-# Masukkan Gemini API Key kamu di sini atau set via Environment Variable Vercel
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "MASUKKAN_API_KEY_GEMINI_DI_SINI")
+# Masukkan API Key Nexotao kamu di sini atau set via Environment Variable
+NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
-# Inisialisasi Client Gemini
+# Inisialisasi Client OpenAI / Nexotao
 client = None
-if GEMINI_API_KEY and GEMINI_API_KEY != "MASUKKAN_API_KEY_GEMINI_DI_SINI":
+if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
     try:
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        client = OpenAI(
+            api_key=NEXOTAO_API_KEY,
+            base_url="https://api.nexotao.com/v1"  # URL Endpoint Nexotao
+        )
     except Exception as e:
-        print(f"Gagal inisialisasi Gemini: {e}")
+        print(f"Gagal inisialisasi Nexotao: {e}")
 
 KNOWLEDGE_CACHE = ""
 
@@ -39,7 +42,7 @@ def home():
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
-        load_knowledge_base() # Membaca ulang isi .txt jika ada perubahan file
+        load_knowledge_base() # Membaca ulang isi file .txt jika ada perubahan
         data = request.get_json() or {}
         user_msg = data.get('message', '').strip()
         
@@ -48,10 +51,10 @@ def chat():
 
         if not client:
             return jsonify({
-                'response': 'Halo Kak! Sistem AI sedang dalam penyiapan (API Key belum terpasang di Vercel/app.py). Mohon hubungi admin toko ya.'
+                'response': 'Halo Kak! Sistem AI sedang dalam penyiapan (API Key Nexotao belum terpasang). Mohon hubungi admin toko ya.'
             })
 
-        # SYSTEM PROMPT: Memaksa Gemini berpikir HANYA berpatokan pada dokumen toko
+        # SYSTEM PROMPT: Memaksa AI berpikir HANYA berpatokan pada dokumen toko
         system_instruction = (
             "Kamu adalah Customer Service Asisten AI ramah dari Toko Buah ABS Kepanjen. "
             "Tugasmu adalah menjawab pertanyaan pelanggan dengan sopan, hangat, dan membantu. "
@@ -66,14 +69,17 @@ def chat():
             "================================"
         )
 
-        # Meminta Gemini 2.5 Flash memproses jawaban
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=user_msg,
-            config={'system_instruction': system_instruction}
+        # Panggil API Nexotao
+        response = client.chat.completions.create(
+            model="gpt-4o-mini", # Atau ganti model nexotao lain pilihanmu
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": user_msg}
+            ],
+            temperature=0.3 # Temperature rendah agar jawaban tetap fokus & faktual
         )
 
-        bot_reply = response.text if response.text else "Maaf Kak, AI belum bisa merespons saat ini."
+        bot_reply = response.choices[0].message.content if response.choices else "Maaf Kak, AI belum bisa merespons saat ini."
         return jsonify({'response': bot_reply})
 
     except Exception as e:
