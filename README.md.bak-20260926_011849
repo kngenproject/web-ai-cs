@@ -6,7 +6,7 @@ Aplikasi Customer Service AI berbasis web yang super cepat, ringan, cerdas, dan 
 
 ## ⚡ Fitur Utama & Optimasi Biaya
 
-1. **Model DeepSeek V3 (`deepseek-v3-2`)**: Menggunakan model `nova-micro` via Nexotao API untuk eksekusi reasoning cepat dan biaya terjangkau.
+1. **Model Ultra Efisien (`nova-micro`)**: Menggunakan model `nova-micro` via Nexotao API untuk eksekusi reasoning cepat dan biaya terjangkau.
 2. **0-Token Quick Replies**: Sapaan umum (*halo, hai, p, terima kasih, selamat malam, dll*) langsung dijawab dari memori lokal Flask tanpa memanggil API (0 Token).
 3. **Dynamic Knowledge Retrieval**: Hanya membaca file `.txt` di folder `knowledge/` yang sesuai dengan topik pertanyaan pelanggan (*Loker*, *Lokasi/Jam*, *Produk/Parcel*), menghemat hingga 80% input token.
 4. **Respon Ringkas & Faktual**: Dibatasi maksimal 100 token output. Menjawab dengan bahasa ramah (sapaan *Kak/Bunda*), luwes, dan 100% tersetel pada fakta dokumen `.txt`.
