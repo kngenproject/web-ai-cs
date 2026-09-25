@@ -5,7 +5,6 @@ from openai import OpenAI
 
 app = Flask(__name__)
 
-# Mengambil API Key Nexotao dari Environment Variable Vercel / Lokal
 NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
 client = None
@@ -77,14 +76,14 @@ def chat():
     try:
         data = request.get_json() or {}
         user_msg = data.get('message', '').strip()
-        chat_history = data.get('history', [])  # Ambil riwayat chat dari frontend
+        chat_history = data.get('history', [])
         
         if not user_msg:
             return jsonify({'response': 'Mohon tuliskan pertanyaan Kakak ya 😊'})
 
         msg_lower = user_msg.lower()
 
-        # TEKNIK 0 TOKEN 1: Sapaan Ringan (Tanpa AI)
+        # TEKNIK 0 TOKEN 1: Sapaan Ringan
         if msg_lower in QUICK_REPLIES:
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
@@ -109,11 +108,9 @@ def chat():
                 'response': 'Halo Kak! Sistem AI sedang dalam penyiapan (API Key Nexotao belum terpasang). Mohon hubungi admin toko ya.'
             })
 
-        # Ambil konteks gabungan (Pesan sekarang + riwayat terakhir untuk deteksi topik)
         combined_context = user_msg + " " + " ".join([h.get('content', '') for h in chat_history[-2:]])
         relevant_knowledge = get_relevant_knowledge(combined_context)
 
-        # SYSTEM PROMPT
         system_instruction = (
             "Kamu adalah Customer Service Toko Buah ABS Kepanjen (panggil pelanggan 'Kak').\n\n"
             "PROSES BERPIKIR & CARA MENJAWAB:\n"
@@ -127,18 +124,21 @@ def chat():
             "=============================="
         )
 
-        # Susun struktur pesan ke AI (System Prompt + Riwayat Percakapan + Pesan Baru)
         messages_to_ai = [{"role": "system", "content": system_instruction}]
         
-        # Batasi riwayat maksimal 6 pesan terakhir (3 pasang obrolan) agar irit token
-        for hist in chat_history[-6:]:
-            if hist.get('role') in ['user', 'assistant'] and hist.get('content'):
-                messages_to_ai.append({
-                    "role": hist['role'],
-                    "content": hist['content']
-                })
+        # Validasi Urutan Riwayat: Pastikan entri riwayat pertama HARUS role 'user'
+        filtered_history = [h for h in chat_history[-6:] if h.get('role') in ['user', 'assistant'] and h.get('content')]
         
-        # Tambahkan pesan terbaru user
+        # Buang pesan assistant di paling depan jika riwayat diawali oleh assistant
+        while filtered_history and filtered_history[0]['role'] == 'assistant':
+            filtered_history.pop(0)
+
+        for hist in filtered_history:
+            messages_to_ai.append({
+                "role": hist['role'],
+                "content": hist['content']
+            })
+        
         messages_to_ai.append({"role": "user", "content": user_msg})
 
         response = client.chat.completions.create(
