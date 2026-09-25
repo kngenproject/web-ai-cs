@@ -87,145 +87,21 @@ def chat():
         if msg_lower in QUICK_REPLIES:
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
-        # ============================================================
-        # AI LOKER ROUTER
-        # AI menentukan apakah pertanyaan membutuhkan:
-        #   FULL_LOKER     = kirim seluruh knowledge/loker.txt
-        #   PARTIAL_LOKER  = jawab pertanyaan spesifik berdasarkan loker
-        #   OTHER          = lanjut ke CS/AI normal
-        #
-        # Penting:
-        # - Tidak menggunakan keyword sederhana.
-        # - Keputusan berdasarkan makna/konteks pertanyaan.
-        # - FULL_LOKER tidak meminta AI menulis ulang isi loker.txt.
-        # ============================================================
-
-        loker_router_prompt = f"""
-Anda adalah router untuk sistem Customer Service Toko Buah ABS Kepanjen.
-
-Tentukan INTENT pesan pelanggan berikut.
-
-Pilih tepat SATU label:
-
-FULL_LOKER
-Gunakan jika pelanggan meminta informasi lowongan secara umum,
-informasi lengkap/detail lowongan, bertanya apakah ada lowongan,
-ingin mengetahui lowongan yang tersedia, atau jelas membutuhkan
-informasi loker secara keseluruhan.
-
-PARTIAL_LOKER
-Gunakan jika pelanggan menanyakan SATU BAGIAN tertentu dari lowongan,
-misalnya umur, syarat, gaji, posisi, jam kerja, tempat tinggal/mes,
-dokumen, cara melamar, atau pertanyaan spesifik lainnya tentang loker.
-
-OTHER
-Gunakan jika pesan bukan pertanyaan tentang lowongan kerja.
-
-Aturan penting:
-- Jangan memilih FULL_LOKER hanya karena ada kata "loker".
-- Pahami maksud keseluruhan kalimat.
-- Jika pertanyaan meminta gambaran/info lowongan secara umum, pilih FULL_LOKER.
-- Jika pertanyaan hanya meminta satu informasi tertentu, pilih PARTIAL_LOKER.
-- Jawab HANYA salah satu dari:
-FULL_LOKER
-PARTIAL_LOKER
-OTHER
-
-Pesan pelanggan:
-{message}
-"""
-
-        loker_intent = "OTHER"
-
-        try:
-            router_response = client.chat.completions.create(
-                model=MODEL,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Anda adalah intent classifier. Output hanya label yang diminta."
-                    },
-                    {
-                        "role": "user",
-                        "content": loker_router_prompt
-                    }
-                ],
-                temperature=0,
-                max_tokens=10
-            )
-
-            loker_intent = (
-                router_response.choices[0].message.content.strip().upper()
-            )
-
-            # Bersihkan kemungkinan formatting AI
-            loker_intent = loker_intent.replace("`", "").strip()
-
-            if loker_intent not in {
-                "FULL_LOKER",
-                "PARTIAL_LOKER",
-                "OTHER"
-            }:
-                loker_intent = "OTHER"
-
-        except Exception as e:
-            print(f"LOKER ROUTER ERROR: {e}")
-            loker_intent = "OTHER"
-
-        print(f"LOKER INTENT: {loker_intent}")
-
-        # ============================================================
-        # FULL LOKER
-        # ============================================================
-        if loker_intent == "FULL_LOKER":
-            loker_path = "knowledge/loker.txt"
-
-            try:
-                with open(loker_path, "r", encoding="utf-8") as f:
-                    loker_content = f.read().strip()
-
-                if loker_content:
-                    return jsonify({
-                        "response":
-                            "Halo Kak! 😊 Berikut informasi lengkap "
-                            "lowongan kerja di Toko Buah ABS Kepanjen:\n\n"
-                            + loker_content
-                    })
-
-            except Exception as e:
-                print(f"Gagal membaca loker.txt: {e}")
-
-        # ============================================================
-        # PARTIAL LOKER
-        # ============================================================
-        # Untuk pertanyaan spesifik, isi loker.txt tetap diberikan
-        # sebagai konteks kepada AI CS agar jawabannya bersumber dari
-        # informasi resmi loker.
-        if loker_intent == "PARTIAL_LOKER":
-            try:
-                with open("knowledge/loker.txt", "r", encoding="utf-8") as f:
-                    loker_content = f.read().strip()
-
-                if loker_content:
-                    loker_context = f"""
-INFORMASI RESMI LOWONGAN KERJA ABS:
-{loker_content}
-
-Gunakan informasi resmi di atas untuk menjawab pertanyaan pelanggan.
-Jawab hanya bagian yang ditanyakan pelanggan.
-Jangan mengarang informasi yang tidak ada.
-Jika informasi tidak tersedia di loker.txt, katakan bahwa informasi
-tersebut belum tercantum dan arahkan pelanggan untuk menghubungi ABS.
-"""
-                    message = (
-                        message
-                        + "\n\n"
-                        + loker_context
-                    )
-
-            except Exception as e:
-                print(f"Gagal membaca loker.txt untuk konteks: {e}")
-
+        # TEKNIK 0 TOKEN 2: Direct Paste Info Lengkap Loker
+        full_loker_triggers = [
+            'info lengkap loker', 'infoloker lengkap', 'semua info loker', 'detail loker', 
+            'syarat lengkap loker', 'minta info loker', 'info loker lengkap', 'info lengkap lowongan', 
+            'info lowongan', 'mana lokernya', 'dokumennya mana', 'yang mana'
+        ]
+        if any(trigger in msg_lower for trigger in full_loker_triggers):
+            loker_files = glob.glob("knowledge/*loker*.txt")
+            if loker_files:
+                try:
+                    with open(loker_files[0], "r", encoding="utf-8") as f:
+                        loker_content = f.read().strip()
+                    return jsonify({'response': f"Halo Kak! 😊 Berikut informasi lengkap lowongan pekerjaan di Toko Buah ABS Kepanjen:\n\n{loker_content}"})
+                except Exception as e:
+                    print(f"Gagal membaca file loker: {e}")
 
         if not client:
             return jsonify({
