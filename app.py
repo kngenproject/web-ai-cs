@@ -28,7 +28,7 @@ QUICK_REPLIES = {
     "selamat malam": "Selamat malam Kak! 😊 Ada yang bisa dibantu seputar Toko Buah ABS Kepanjen?",
     "selamat siang": "Selamat siang Kak! 😊 Ada yang bisa dibantu hari ini?",
     "selamat pagi": "Selamat pagi Kak! 😊 Ada yang bisa kami bantu?",
-    "terima kasih": "Sama-sama Kak! Ditunggu kedatangan Anda di Toko Buah ABS Kepanjen ya 😊",
+    "terima kasih": "Sama-sama Kak! Ditunggu kedatangannya di Toko Buah ABS Kepanjen ya 😊",
     "makasih": "Sama-sama Kak! Semoga sehat selalu 😊",
     "tes": "Sistem CS AI Toko Buah ABS Kepanjen aktif dan siap membantu Kak! 😊"
 }
@@ -77,17 +77,18 @@ def chat():
     try:
         data = request.get_json() or {}
         user_msg = data.get('message', '').strip()
+        chat_history = data.get('history', [])  # Ambil riwayat chat dari frontend
         
         if not user_msg:
             return jsonify({'response': 'Mohon tuliskan pertanyaan Kakak ya 😊'})
 
         msg_lower = user_msg.lower()
 
-        # TEKNIK 0 TOKEN 1: Sapaan Ringan
+        # TEKNIK 0 TOKEN 1: Sapaan Ringan (Tanpa AI)
         if msg_lower in QUICK_REPLIES:
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
-        # TEKNIK 0 TOKEN 2: Direct Paste untuk Permintaan Info Lengkap Loker
+        # TEKNIK 0 TOKEN 2: Direct Paste Info Lengkap Loker
         full_loker_triggers = [
             'info lengkap loker', 'infoloker lengkap', 'semua info loker', 'detail loker', 
             'syarat lengkap loker', 'minta info loker', 'info loker lengkap', 'info lengkap lowongan', 
@@ -108,30 +109,43 @@ def chat():
                 'response': 'Halo Kak! Sistem AI sedang dalam penyiapan (API Key Nexotao belum terpasang). Mohon hubungi admin toko ya.'
             })
 
-        relevant_knowledge = get_relevant_knowledge(user_msg)
+        # Ambil konteks gabungan (Pesan sekarang + riwayat terakhir untuk deteksi topik)
+        combined_context = user_msg + " " + " ".join([h.get('content', '') for h in chat_history[-2:]])
+        relevant_knowledge = get_relevant_knowledge(combined_context)
 
-        # SYSTEM PROMPT: Memandu Pemikiran AI Sebelum Menjawab
+        # SYSTEM PROMPT
         system_instruction = (
             "Kamu adalah Customer Service Toko Buah ABS Kepanjen (panggil pelanggan 'Kak').\n\n"
-            "PROSES BERPIKIR SEBELUM MENJAWAB:\n"
-            "1. Pahami pertanyaan pelanggan secara cermat.\n"
-            "2. Gunakan HANYA informasi nyata dari DATA TOKO di bawah.\n"
+            "PROSES BERPIKIR & CARA MENJAWAB:\n"
+            "1. Pahami pertanyaan pelanggan dan hubungkan dengan riwayat percakapan sebelumnya agar nyambung.\n"
+            "2. Gunakan HANYA data dari DATA TOKO di bawah.\n"
             "3. Jawab langsung inti pertanyaannya dengan jelas, sopan, dan ramah (1-3 kalimat).\n"
-            "4. DILARANG KERAS menyuruh pelanggan membaca 'dokumen', 'file', atau 'sistem' di atas. Pelanggan TIDAK BISA melihat teks internal toko ini.\n"
-            "5. Jika fakta spesifik tidak ada di data, sampaikan maaf secara jujur dan sarankan hubungi admin/datang ke toko.\n\n"
+            "4. DILARANG KERAS menyuruh pelanggan membaca 'dokumen', 'file', atau 'sistem' di atas.\n"
+            "5. Jika fakta tidak ada di data toko, sampaikan maaf secara jujur.\n\n"
             "=== DATA TOKO ABS KEPANJEN ===\n"
             f"{relevant_knowledge}\n"
             "=============================="
         )
 
+        # Susun struktur pesan ke AI (System Prompt + Riwayat Percakapan + Pesan Baru)
+        messages_to_ai = [{"role": "system", "content": system_instruction}]
+        
+        # Batasi riwayat maksimal 6 pesan terakhir (3 pasang obrolan) agar irit token
+        for hist in chat_history[-6:]:
+            if hist.get('role') in ['user', 'assistant'] and hist.get('content'):
+                messages_to_ai.append({
+                    "role": hist['role'],
+                    "content": hist['content']
+                })
+        
+        # Tambahkan pesan terbaru user
+        messages_to_ai.append({"role": "user", "content": user_msg})
+
         response = client.chat.completions.create(
             model="deepseek-v3-2",
-            messages=[
-                {"role": "system", "content": system_instruction},
-                {"role": "user", "content": user_msg}
-            ],
+            messages=messages_to_ai,
             temperature=0.3,
-            max_tokens=110  # Dinaikkan ke 110 token agar jawaban hasil penalaran utuh & tidak terpotong
+            max_tokens=110
         )
 
         bot_reply = response.choices[0].message.content if response.choices else "Maaf Kak, AI belum bisa merespons saat ini."
