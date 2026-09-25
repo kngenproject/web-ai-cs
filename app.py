@@ -18,7 +18,7 @@ if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
     except Exception as e:
         print(f"Gagal inisialisasi Nexotao: {e}")
 
-# 1. Jawaban Instan 0 Token untuk Sapaan Umum (Menggunakan sapaan ramah netral)
+# 1. Quick Replies 0 Token (Sapaan Langsung Dijawab Tanpa API)
 QUICK_REPLIES = {
     "halo": "Halo Kak! 😊 Ada yang bisa kami bantu seputar stok buah, parcel, lokasi, atau loker di Toko Buah ABS Kepanjen?",
     "hai": "Halo Kak! 😊 Selamat datang di Toko Buah ABS Kepanjen. Ada yang bisa dibantu?",
@@ -33,7 +33,7 @@ QUICK_REPLIES = {
     "tes": "Sistem CS AI Toko Buah ABS Kepanjen aktif dan siap membantu Kak! 😊"
 }
 
-# 2. Dynamic Knowledge Retrieval (Filter Dokumen Relevan)
+# 2. Dynamic Knowledge Retrieval (Hanya Ambil File Relevan)
 def get_relevant_knowledge(user_msg):
     msg = user_msg.lower()
     target_files = []
@@ -94,14 +94,15 @@ def chat():
 
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
-        # System Prompt Ringkas, Disiplin, dan Sapaan Ramah
+        # SYSTEM PROMPT: Nyambung, Ramah, Fleksibel, tapi Tetap Irit & Faktual
         system_instruction = (
-            "Kamu adalah CS Toko Buah ABS Kepanjen (selalu panggil 'Kak').\n"
-            "ATURAN MENJAWAB:\n"
-            "1. Gunakan sapaan yang sesuai/netral (seperti 'Halo Kak!'). Jangan kaku menyalin kata 'Selamat siang/pagi' dari dokumen jika tidak relevan.\n"
-            "2. Ambil FAKTA INFORMASI (lokasi, jam buka, stok, syarat loker) HANYA dari DOKUMEN PENGETAHUAN di bawah.\n"
-            "3. Jawab secara SANGAT RINGKAS, jelas, dan to the point (maksimal 1-3 kalimat pendek).\n"
-            "4. Jika informasi tidak ada di dokumen, sampaikan dengan ramah bahwa info tersebut belum tersedia.\n\n"
+            "Kamu adalah CS Toko Buah ABS Kepanjen yang ramah dan alami (panggil 'Kak').\n\n"
+            "ATURAN RESPON:\n"
+            "1. Jawablah dengan kalimat yang LUWES, NYAMBUNG, dan KOMUNIKATIF sesuai pertanyaan pelanggan.\n"
+            "2. Gunakan sapaan netral seperti 'Halo Kak!' atau sesuaikan dengan sapaan pelanggan. Jangan kaku menyalin kata sapaan/salam dari dokumen.\n"
+            "3. Semua FAKTA INTI (alamat, jam buka, nominal gaji, syarat, isi paket) WAJIB 100% PERSIS dengan DOKUMEN PENGETAHUAN.\n"
+            "4. Jawab secara ringkas dan to the point (maksimal 2-3 kalimat pendek).\n"
+            "5. Jika informasi tidak ada di dokumen, sampaikan dengan ramah bahwa info tersebut belum tersedia di sistem.\n\n"
             "=== DOKUMEN PENGETAHUAN ===\n"
             f"{relevant_knowledge}\n"
             "==========================="
@@ -113,8 +114,8 @@ def chat():
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_msg}
             ],
-            temperature=0.2,
-            max_tokens=90
+            temperature=0.3, # Sedikit dinaikkan agar kalimat lebih mengalir alami
+            max_tokens=100   # Dibatasi 100 token agar tetap sangat hemat
         )
 
         bot_reply = response.choices[0].message.content if response.choices else "Maaf Kak, AI belum bisa merespons saat ini."
