@@ -63,6 +63,14 @@
             border: 2px solid #ffffff; 
         }
 
+        .header-subtitle {
+            font-size: 10.5px;
+            color: #C8E6C9;
+            margin-top: 1px;
+            letter-spacing: 0.2px;
+            font-weight: 400;
+        }
+
         .header-title {
             font-size: 16px;
             font-weight: 600;
@@ -167,7 +175,10 @@
         <div class="chat-header">
             <div class="header-brand">
                 <img src="/static/logo/logo.png" alt="Logo" onerror="this.style.display='none'">
-                <span class="header-title">CS ABS Kepanjen</span>
+                <div>
+                    <div class="header-title">CS ABS Kepanjen</div>
+                    <div class="header-subtitle">🤖 Dibalas oleh AI • Mohon maaf bila ada kesalahan</div>
+                </div>
             </div>
             <button class="clear-btn" onclick="clearChat()">Hapus Chat</button>
         </div>
@@ -183,7 +194,7 @@
 
         window.onload = function() {
             if (chatHistory.length === 0) {
-                appendMessage('bot', 'Halo Kak! 😊 Ada yang bisa kami bantu seputar stok buah, parcel, lokasi, atau loker di Toko Buah ABS Kepanjen?');
+                appendMessage('bot', 'Halo Kak! 😊 Saya asisten AI Toko Buah ABS Kepanjen. Ada yang bisa dibantu seputar stok buah, parcel, lokasi, atau loker?\n\n(Mohon maaf bila ada kesalahan dalam menjawab ya Kak 🙏)');
             } else {
                 chatHistory.forEach(msg => appendToUI(msg.role === 'user' ? 'user' : 'bot', msg.content));
             }
@@ -232,7 +243,7 @@
                 localStorage.removeItem('abs_chat_history');
                 chatHistory = [];
                 document.getElementById('chatBox').innerHTML = '';
-                appendMessage('bot', 'Halo Kak! 😊 Ada yang bisa kami bantu seputar stok buah, parcel, lokasi, atau loker di Toko Buah ABS Kepanjen?');
+                appendMessage('bot', 'Halo Kak! 😊 Saya asisten AI Toko Buah ABS Kepanjen. Ada yang bisa dibantu seputar stok buah, parcel, lokasi, atau loker?\n\n(Mohon maaf bila ada kesalahan dalam menjawab ya Kak 🙏)');
             }
         }
     </script>
