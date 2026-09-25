@@ -1,5 +1,45 @@
 {
-    "store_name": "Toko Buah ABS Kepanjen - Loker",
-    "system_instruction": "Role: CS Loker Toko Buah ABS Kepanjen. Jawab ramah, singkat, dan akurat berdasarkan DATA.",
-    "business_info": "POSISI: Karyawan Toko (2 Wanita)\nSYARAT: Usia max ±25, ada KTP/KK, sopan, niat kerja. Bisa Mess/PP.\nJAM KERJA: 07.00-21.00 WIB (Istirahat 2 jam/hari). Buka Senin-Minggu. Libur 2x/bulan.\nFASILITAS: Makan & minum GRATIS bagi yang di Mess.\nTUGAS: Melayani pembeli, menata dagangan & operasional toko.\nBERKAS: Foto+CV, Riwayat Pendidikan, Pengalaman (jika ada), FC KTP/KK, FC Ijazah.\nCARA LAMAR: Kirim softfile ke WA ini / antar ke toko. Selesai kirim BISA LANGSUNG DATANG ke toko.\nLOKASI: https://goo.gl/maps/sDB87wgjQrQ2\nCATATAN: Jika 1-2 hari tak ada panggilan = belum diterima. Loker tutup jika kuota penuh."
+  "nama_toko": "Toko Buah ABS Kepanjen",
+  "deskripsi": "Penyedia berbagai macam parcel buah, buah lokal, dan import berkualitas di Kepanjen.",
+  "lokasi": {
+    "alamat": "Kepanjen, Kabupaten Malang",
+    "maps": "https://goo.gl/maps/sDB87wgjQrQ2"
+  },
+  "jam_operasional": "Setiap hari (Senin - Minggu) pukul 08.00 - 21.00 WIB",
+  "produk_layanan": [
+    "Buah Lokal & Import Segar",
+    "Parcel Buah Custom (Ulang Tahun, Hantaran, Besukan, dll.)",
+    "Pemesanan Ecer & Grosir"
+  ],
+  "lowongan_kerja": {
+    "status": "DIBUKA KEMBALI (Dapat ditutup sewaktu-waktu jika kuota terpenuhi)",
+    "kuota": "2 Karyawan Perempuan",
+    "posisi": "Karyawan Toko / Pramuniaga",
+    "persyaratan": [
+      "Perempuan",
+      "Memiliki tanda pengenal (KTP/KK)",
+      "Niat kerja & berpenampilan sopan",
+      "Maksimal usia ± 25 tahun",
+      "Bisa tinggal di mess yang disediakan atau PP (Pulang-Pergi)"
+    ],
+    "jam_kerja_dan_fasilitas": {
+      "jam_kerja": "±07.00 - ±21.00 WIB",
+      "hari_kerja": "Senin - Minggu (Libur 2 hari sebulan, istirahat 2 jam sehari)",
+      "fasilitas": "Makan & minum disediakan bagi yang tinggal di mess"
+    },
+    "tugas_pekerjaan": [
+      "Melayani pembeli",
+      "Menata dagangan",
+      "Kegiatan lain yang berkaitan dengan toko"
+    ],
+    "berkas_lamaran": [
+      "Foto & data diri lengkap",
+      "Riwayat pendidikan",
+      "Pengalaman kerja (bila ada)",
+      "Fotocopy KTP/KK",
+      "Fotocopy Ijazah terakhir"
+    ],
+    "cara_melamar": "Kirimkan CV & berkas lamaran berupa softfile ke WhatsApp toko atau antar langsung berkas hardfile ke lokasi Toko Buah ABS Kepanjen. Setelah mengirimkan lamaran, bisa langsung datang ke toko.",
+    "catatan_tambahan": "Jika dalam waktu 1-2 hari belum ada panggilan setelah mengirimkan lamaran, mohon maaf kemungkinan belum diterima."
+  }
 }
