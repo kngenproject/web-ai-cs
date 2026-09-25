@@ -8,21 +8,28 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f8; display: flex; justify-content: center; height: 100vh; }
         .chat-container { width: 100%; max-width: 480px; background: #ffffff; display: flex; flex-direction: column; height: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .chat-header { background: #2e7d32; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .clear-btn { background: #c62828; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
-        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; white-space: pre-line; }
+        .chat-header { background: #2e7d32; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .header-brand { display: flex; align-items: center; gap: 10px; }
+        .header-brand img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #ffffff; border: 2px solid #ffffff; }
+        .clear-btn { background: #c62828; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .clear-btn:hover { background: #b71c1c; }
+        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #fafafa; }
+        .message { max-width: 82%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; white-space: pre-line; }
         .user-msg { background: #e8f5e9; color: #1b5e20; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .bot-msg { background: #f1f3f4; color: #202124; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .bot-msg { background: #ffffff; color: #202124; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #e0e0e0; }
         .chat-input { display: flex; padding: 12px; border-top: 1px solid #e0e0e0; background: #fff; }
         .chat-input input { flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-size: 14px; }
         .chat-input button { margin-left: 8px; background: #2e7d32; color: white; border: none; padding: 10px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .chat-input button:hover { background: #1b5e20; }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <span>🥭 CS ABS Kepanjen</span>
+            <div class="header-brand">
+                <img src="/static/logo/logo.png" alt="Logo Toko Buah ABS">
+                <span>CS ABS Kepanjen</span>
+            </div>
             <button class="clear-btn" onclick="clearChat()">Hapus Chat</button>
         </div>
         <div class="chat-box" id="chatBox"></div>
@@ -55,14 +62,13 @@
         function appendMessage(sender, text) {
             appendToUI(sender, text);
             chatHistory.push({ role: sender === 'user' ? 'user' : 'assistant', content: text });
-            // Simpan maksimal 10 pesan terakhir di localStorage browser
             if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
             localStorage.setItem('abs_chat_history', JSON.stringify(chatHistory));
         }
 
         async function sendMessage() {
             const input = document.getElementById('userInput');
-            const text = input.value.strip ? input.value.strip() : input.value.trim();
+            const text = input.value.trim();
             if (!text) return;
 
             appendMessage('user', text);
