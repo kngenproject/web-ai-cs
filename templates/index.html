@@ -29,17 +29,34 @@
             margin: 0 auto;
             background: #ffffff;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            position: relative;
         }
 
         .chat-header {
             background: #2e7d32;
             color: white;
-            padding: 15px;
-            text-align: center;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             z-index: 10;
+        }
+
+        .clear-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .clear-btn:active {
+            background: rgba(255, 255, 255, 0.4);
         }
 
         .chat-box {
@@ -53,12 +70,13 @@
         }
 
         .message {
-            max-width: 80%;
+            max-width: 82%;
             padding: 10px 14px;
             border-radius: 15px;
             font-size: 0.95rem;
             line-height: 1.4;
             word-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         .bot-message {
@@ -103,11 +121,6 @@
             cursor: pointer;
         }
 
-        .chat-input-container button:active {
-            background-color: #1b5e20;
-        }
-
-        /* Catatan Kaki AI */
         .ai-disclaimer {
             font-size: 0.72rem;
             color: #777;
@@ -122,21 +135,17 @@
 
 <div class="chat-container">
     <div class="chat-header">
-        🍎 CS Toko Buah ABS Kepanjen
+        <span>🍎 CS Toko Buah ABS Kepanjen</span>
+        <button class="clear-btn" id="clearBtn" title="Hapus Obrolan">Hapus Chat</button>
     </div>
 
-    <div class="chat-box" id="chatBox">
-        <div class="message bot-message">
-            Halo Kak! 😊 Selamat datang di Toko Buah ABS Kepanjen. Ada yang bisa kami bantu seputar stok buah, harga, paket parcel, atau informasi loker? 🍎🍊
-        </div>
-    </div>
+    <div class="chat-box" id="chatBox"></div>
 
     <form class="chat-input-container" id="chatForm">
         <input type="text" id="userInput" placeholder="Tulis pesan di sini..." autocomplete="off" required>
         <button type="submit">Kirim</button>
     </form>
     
-    <!-- Pesan Catatan Kaki -->
     <div class="ai-disclaimer">
         🤖 <i>Pesan dijawab oleh AI Asisten. Mohon maklum jika ada kesalahan informasi.</i>
     </div>
@@ -146,13 +155,68 @@
     const chatForm = document.getElementById('chatForm');
     const userInput = document.getElementById('userInput');
     const chatBox = document.getElementById('chatBox');
+    const clearBtn = document.getElementById('clearBtn');
 
+    const STORAGE_KEY = 'abs_chat_history_v1';
+    const DEFAULT_WELCOME = "Halo Kak! 😊 Selamat datang di Toko Buah ABS Kepanjen. Ada yang bisa kami bantu seputar stok buah, harga, paket parcel, lokasi, Instagram, atau informasi loker? 🍎🍊";
+
+    // 1. Muat riwayat chat saat halaman dibuka
+    function loadChatHistory() {
+        const savedHistory = localStorage.getItem(STORAGE_KEY);
+        if (savedHistory) {
+            try {
+                const messages = JSON.parse(savedHistory);
+                if (messages.length > 0) {
+                    messages.forEach(msg => {
+                        appendMessageUI(msg.text, msg.className, false);
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    return;
+                }
+            } catch (e) {
+                console.error("Gagal membaca history:", e);
+            }
+        }
+        
+        // Jika belum ada history, tampilkan pesan sambutan default
+        appendMessageUI(DEFAULT_WELCOME, 'bot-message', true);
+    }
+
+    // 2. Simpan pesan ke localStorage
+    function saveMessageToStorage(text, className) {
+        let messages = [];
+        const savedHistory = localStorage.getItem(STORAGE_KEY);
+        if (savedHistory) {
+            try {
+                messages = JSON.parse(savedHistory);
+            } catch (e) {
+                messages = [];
+            }
+        }
+        messages.push({ text, className });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    }
+
+    // 3. Tampilkan pesan ke layar
+    function appendMessageUI(text, className, save = true) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${className}`;
+        msgDiv.innerText = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        if (save) {
+            saveMessageToStorage(text, className);
+        }
+    }
+
+    // Event Submit Form
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const message = userInput.value.trim();
         if (!message) return;
 
-        appendMessage(message, 'user-message');
+        appendMessageUI(message, 'user-message', true);
         userInput.value = '';
 
         const loadingDiv = document.createElement('div');
@@ -170,20 +234,25 @@
             const data = await response.json();
             
             chatBox.removeChild(loadingDiv);
-            appendMessage(data.response || data.reply || 'Maaf Kak, terjadi kendala koneksi.', 'bot-message');
+            const botReply = data.response || 'Maaf Kak, terjadi kendala koneksi.';
+            appendMessageUI(botReply, 'bot-message', true);
         } catch (err) {
             chatBox.removeChild(loadingDiv);
-            appendMessage('Maaf Kak, sedang tidak bisa terhubung ke server.', 'bot-message');
+            appendMessageUI('Maaf Kak, sedang tidak bisa terhubung ke server.', 'bot-message', false);
         }
     });
 
-    function appendMessage(text, className) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${className}`;
-        msgDiv.innerText = text;
-        chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
+    // Event Tombol Hapus Chat
+    clearBtn.addEventListener('click', () => {
+        if (confirm("Apakah Kakak yakin ingin menghapus semua riwayat percakapan?")) {
+            localStorage.removeItem(STORAGE_KEY);
+            chatBox.innerHTML = '';
+            appendMessageUI(DEFAULT_WELCOME, 'bot-message', true);
+        }
+    });
+
+    // Jalankan pemuatan riwayat saat pertama kali aplikasi dimuat
+    loadChatHistory();
 </script>
 
 </body>
