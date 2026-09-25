@@ -5,10 +5,10 @@ import glob
 app = Flask(__name__)
 
 # =========================================================
-# 1. GLOBAL CACHING: Membaca pengetahuan HANYA SEKALI di RAM
+# GLOBAL CACHING: Membaca pengetahuan HANYA SEKALI di RAM
 # =========================================================
 KNOWLEDGE_CACHE = ""
-RESPONSE_CACHE = {}  # Menyimpan jawaban dari pertanyaan yang sama/sering ditanyakan
+RESPONSE_CACHE = {}
 
 def init_knowledge_base():
     global KNOWLEDGE_CACHE
@@ -23,7 +23,6 @@ def init_knowledge_base():
     KNOWLEDGE_CACHE = combined_text
     print(f"✅ Knowledge Base berhasil dimuat ke RAM ({len(txt_files)} file .txt).")
 
-# Panggil fungsi sekali saat app Flask mulai berjalan
 init_knowledge_base()
 
 @app.route('/')
@@ -39,19 +38,21 @@ def chat():
         if not msg:
             return jsonify({'response': 'Mohon tuliskan pertanyaan Kakak ya 😊'})
 
-        # =========================================================
-        # 2. CHECK RESPONSE CACHE (Jika pertanyaan sudah pernah dijawab)
-        # =========================================================
         if msg in RESPONSE_CACHE:
             return jsonify({'response': RESPONSE_CACHE[msg]})
 
-        # =========================================================
-        # 3. PENCOCOKAN JAWABAN (Menggunakan KNOWLEDGE_CACHE di RAM)
-        # =========================================================
         reply = ""
 
+        # Instagram & Sosial Media
+        if any(k in msg for k in ['instagram', 'ig', 'sosmed', 'sosial media', 'media sosial', 'abskepanjen']):
+            reply = (
+                "Halo Kak! 😊 Silakan ikuti akun Instagram resmi Toko Buah ABS Kepanjen di **@abskepanjen** "
+                "untuk update stok buah segar, contoh parcel, dan promo menarik!\n\n"
+                "📸 **Instagram:** https://www.instagram.com/abskepanjen/"
+            )
+
         # Gaji & Upah
-        if any(k in msg for k in ['gaji', 'upah', 'bayar', 'penghasilan', 'thr', 'bonus', 'dapat berapa']):
+        elif any(k in msg for k in ['gaji', 'upah', 'bayar', 'penghasilan', 'thr', 'bonus', 'dapat berapa']):
             reply = (
                 "Halo Kak! 😊 Mengenai **gaji dan hak keuangan** di Toko Buah ABS Kepanjen, "
                 "nominal resminya disesuaikan dengan posisi dan disampaikan secara transparan saat wawancara / penyerahan berkas langsung di toko yaa.\n\n"
@@ -113,8 +114,12 @@ def chat():
             reply = "Halo Kak! 😊 Toko Buah ABS Kepanjen buka setiap hari pukul 08.00 - 21.00 WIB. Silakan mampir! 🍎🍊"
 
         # Lokasi Toko
-        elif any(k in msg for k in ['lokasi', 'alamat', 'dimana', 'maps', 'tempat']):
-            reply = "Halo Kak! 😊 Toko Buah ABS beralamat di Kepanjen, Kabupaten Malang.\n\nGoogle Maps: https://goo.gl/maps/sDB87wgjQrQ2"
+        elif any(k in msg for k in ['lokasi', 'alamat', 'dimana', 'maps', 'tempat', 'peta', 'petunjuk']):
+            reply = (
+                "Halo Kak! 😊 Toko Buah ABS beralamat di Kepanjen, Kabupaten Malang.\n\n"
+                "📍 **Google Maps:** https://goo.gl/maps/sDB87wgjQrQ2\n"
+                "📸 **Instagram:** https://www.instagram.com/abskepanjen/"
+            )
 
         # Parcel & Buah
         elif any(k in msg for k in ['parcel', 'parsel', 'buah', 'hantaran', 'besukan', 'stok']):
@@ -122,9 +127,9 @@ def chat():
 
         # Sapaan
         elif any(k in msg for k in ['halo', 'hai', 'pagi', 'siang', 'sore', 'malam', 'assalamualaikum', 'permisi']):
-            reply = "Halo Kak/Bunda! 😊 Selamat datang di CS Online Toko Buah ABS Kepanjen. Ada yang bisa kami bantu seputar stok buah, parcel, jam buka, lokasi, atau info lowongan kerja?"
+            reply = "Halo Kak/Bunda! 😊 Selamat datang di CS Online Toko Buah ABS Kepanjen. Ada yang bisa kami bantu seputar stok buah, parcel, jam buka, lokasi, Instagram, atau info lowongan kerja?"
 
-        # Fallback Search ke Memori RAM
+        # Fallback Search di RAM
         else:
             for line in KNOWLEDGE_CACHE.split('\n'):
                 if any(word in line.lower() for word in msg.split() if len(word) > 3):
@@ -135,10 +140,9 @@ def chat():
                     "Mohon maaf ya Kak/Bunda 😊, CS AI Toko Buah ABS Kepanjen belum menemukan informasi tersebut.\n\n"
                     "Silakan tanyakan seputar:\n"
                     "• **Info Loker** (gaji, syarat, mess, jam kerja, berkas)\n"
-                    "• **Layanan Toko** (stok buah, parcel, jam buka, lokasi)"
+                    "• **Layanan & Sosmed** (stok buah, parcel, jam buka, lokasi, Instagram)"
                 )
 
-        # Simpan hasil ke cache memori agar pertanyaan berikut yang sama bisa dijawab instan
         RESPONSE_CACHE[msg] = reply
         return jsonify({'response': reply})
 
