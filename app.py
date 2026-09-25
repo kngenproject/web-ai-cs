@@ -38,7 +38,7 @@ def get_relevant_knowledge(user_msg):
     msg = user_msg.lower()
     target_files = []
 
-    loker_keywords = ['loker', 'kerja', 'gaji', 'syarat', 'mess', 'berkas', 'poker', 'lowongan', 'lamar', 'gawe', 'infoloker', 'ijazah', 'shift', 'jam kerja']
+    loker_keywords = ['loker', 'kerja', 'gaji', 'syarat', 'mess', 'berkas', 'lowongan', 'lamar', 'gawe', 'infoloker', 'ijazah', 'shift', 'jam kerja', 'cewek', 'wanita', 'perempuan']
     if any(k in msg for k in loker_keywords):
         target_files.extend(glob.glob("knowledge/*loker*.txt"))
 
@@ -87,8 +87,8 @@ def chat():
         if msg_lower in QUICK_REPLIES:
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
-        # TEKNIK 0 TOKEN 2: Direct Paste untuk Info Lengkap Loker
-        full_loker_triggers = ['info lengkap loker', 'infoloker lengkap', 'semua info loker', 'detail loker', 'syarat lengkap loker', 'minta info loker']
+        # TEKNIK 0 TOKEN 2: Direct Paste untuk Permintaan Info Lengkap Loker
+        full_loker_triggers = ['info lengkap loker', 'infoloker lengkap', 'semua info loker', 'detail loker', 'syarat lengkap loker', 'minta info loker', 'info loker lengkap']
         if any(trigger in msg_lower for trigger in full_loker_triggers):
             loker_files = glob.glob("knowledge/*loker*.txt")
             if loker_files:
@@ -110,7 +110,7 @@ def chat():
         system_instruction = (
             "Kamu adalah CS Toko Buah ABS Kepanjen (panggil 'Kak').\n\n"
             "ATURAN RESPON:\n"
-            "1. Jawab pertanyaan spesifik pelanggan secara singkat, padat, dan ramah (1-2 kalimat pendek).\n"
+            "1. Jawab pertanyaan spesifik pelanggan secara singkat, padat, ramah, dan alami (1-2 kalimat pendek).\n"
             "2. Semua FAKTA wajib 100% berdasarkan DOKUMEN PENGETAHUAN di bawah.\n\n"
             "=== DOKUMEN PENGETAHUAN ===\n"
             f"{relevant_knowledge}\n"
