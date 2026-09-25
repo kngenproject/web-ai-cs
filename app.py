@@ -5,7 +5,7 @@ from openai import OpenAI
 
 app = Flask(__name__)
 
-# Masukkan API Key Nexotao kamu di sini atau set via Environment Variable
+# Mengambil API Key Nexotao dari Environment Variable Vercel / Lokal
 NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
 # Inisialisasi Client OpenAI / Nexotao
@@ -14,7 +14,7 @@ if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
     try:
         client = OpenAI(
             api_key=NEXOTAO_API_KEY,
-            base_url="https://api.nexotao.com/v1"  # URL Endpoint Nexotao
+            base_url="https://api.nexotao.com/v1"  # Base URL Nexotao
         )
     except Exception as e:
         print(f"Gagal inisialisasi Nexotao: {e}")
@@ -42,7 +42,7 @@ def home():
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
-        load_knowledge_base() # Membaca ulang isi file .txt jika ada perubahan
+        load_knowledge_base() # Auto-refresh isi dokumen .txt
         data = request.get_json() or {}
         user_msg = data.get('message', '').strip()
         
@@ -54,29 +54,29 @@ def chat():
                 'response': 'Halo Kak! Sistem AI sedang dalam penyiapan (API Key Nexotao belum terpasang). Mohon hubungi admin toko ya.'
             })
 
-        # SYSTEM PROMPT: Memaksa AI berpikir HANYA berpatokan pada dokumen toko
+        # SYSTEM PROMPT: Menginstruksikan Nova Micro untuk berpikir & patuh dokumen
         system_instruction = (
-            "Kamu adalah Customer Service Asisten AI ramah dari Toko Buah ABS Kepanjen. "
-            "Tugasmu adalah menjawab pertanyaan pelanggan dengan sopan, hangat, dan membantu. "
-            "Gunakan selalu sapaan seperti 'Kak' atau 'Kak/Bunda'.\n\n"
-            "ATURAN MUTLAK JAWABAN:\n"
-            "1. Jawablah pertanyaan HANYA berdasarkan DOKUMEN PENGETAHUAN TOKO di bawah ini.\n"
-            "2. Jangan pernah mengarang, meniru, atau memperkirakan informasi yang tidak tertulis di dokumen.\n"
-            "3. Jika pertanyaan pelanggan TIDAK ADA informasinya di dalam dokumen, katakan dengan sangat ramah bahwa informasi tersebut belum tersedia di sistem kami dan sarankan untuk bertanya langsung ke toko.\n"
-            "4. Pahami maksud kalimat pelanggan meskipun ada typo, kata singkatan, atau bahasa santai.\n\n"
+            "Kamu adalah Customer Service AI yang ramah, santun, dan cerdas dari Toko Buah ABS Kepanjen. "
+            "Gunakan selalu sapaan 'Kak' atau 'Kak/Bunda'.\n\n"
+            "TUGAS & ATURAN UTAMA:\n"
+            "1. Pahami maksud pertanyaan pelanggan meskipun ada typo, kata singkatan, atau bahasa santai.\n"
+            "2. Jawablah HANYA berdasarkan DOKUMEN PENGETAHUAN TOKO di bawah ini.\n"
+            "3. Jika jawaban TIDAK ADA di dalam dokumen, katakan secara sopan bahwa informasi tersebut belum tersedia di sistem kami dan sarankan untuk bertanya langsung ke toko.\n"
+            "4. Jawab secara ringkas, jelas, dan ramah tanpa mengarang informasi di luar dokumen.\n\n"
             "=== DOKUMEN PENGETAHUAN TOKO ===\n"
             f"{KNOWLEDGE_CACHE}\n"
             "================================"
         )
 
-        # Panggil API Nexotao
+        # Pemanggilan Model Nova Micro via Nexotao API
         response = client.chat.completions.create(
-            model="gpt-4o-mini", # Atau ganti model nexotao lain pilihanmu
+            model="amazon.nova-micro-v1:0",  # ID Model Nova Micro di Nexotao
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_msg}
             ],
-            temperature=0.3 # Temperature rendah agar jawaban tetap fokus & faktual
+            temperature=0.2,  # Rendah agar tidak berhalusinasi
+            max_tokens=200    # Sangat hemat token output
         )
 
         bot_reply = response.choices[0].message.content if response.choices else "Maaf Kak, AI belum bisa merespons saat ini."
