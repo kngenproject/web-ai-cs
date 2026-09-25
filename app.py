@@ -4,8 +4,14 @@ import glob
 
 app = Flask(__name__)
 
-def load_all_knowledge():
-    """Membaca seluruh isi file .txt di folder knowledge/"""
+# =========================================================
+# 1. GLOBAL CACHING: Membaca pengetahuan HANYA SEKALI di RAM
+# =========================================================
+KNOWLEDGE_CACHE = ""
+RESPONSE_CACHE = {}  # Menyimpan jawaban dari pertanyaan yang sama/sering ditanyakan
+
+def init_knowledge_base():
+    global KNOWLEDGE_CACHE
     combined_text = ""
     txt_files = glob.glob("knowledge/*.txt")
     for filepath in txt_files:
@@ -14,7 +20,11 @@ def load_all_knowledge():
                 combined_text += f.read() + "\n\n"
         except Exception as e:
             print(f"Gagal membaca file {filepath}: {e}")
-    return combined_text.lower(), combined_text
+    KNOWLEDGE_CACHE = combined_text
+    print(f"✅ Knowledge Base berhasil dimuat ke RAM ({len(txt_files)} file .txt).")
+
+# Panggil fungsi sekali saat app Flask mulai berjalan
+init_knowledge_base()
 
 @app.route('/')
 def home():
@@ -29,9 +39,18 @@ def chat():
         if not msg:
             return jsonify({'response': 'Mohon tuliskan pertanyaan Kakak ya 😊'})
 
-        knowledge_lower, knowledge_raw = load_all_knowledge()
+        # =========================================================
+        # 2. CHECK RESPONSE CACHE (Jika pertanyaan sudah pernah dijawab)
+        # =========================================================
+        if msg in RESPONSE_CACHE:
+            return jsonify({'response': RESPONSE_CACHE[msg]})
 
-        # 1. Pertanyaan seputar Gaji / Upah
+        # =========================================================
+        # 3. PENCOCOKAN JAWABAN (Menggunakan KNOWLEDGE_CACHE di RAM)
+        # =========================================================
+        reply = ""
+
+        # Gaji & Upah
         if any(k in msg for k in ['gaji', 'upah', 'bayar', 'penghasilan', 'thr', 'bonus', 'dapat berapa']):
             reply = (
                 "Halo Kak! 😊 Mengenai **gaji dan hak keuangan** di Toko Buah ABS Kepanjen, "
@@ -40,9 +59,8 @@ def chat():
                 "🕒 **Jam Kerja:** ±07.00 - ±21.00 WIB (Libur 2 hari/bulan, istirahat 2 jam/hari).\n\n"
                 "Yuk kirimkan CV atau langsung datang ke toko! 🍎"
             )
-            return jsonify({'response': reply})
 
-        # 2. Pertanyaan Mess / Makan / Tempat Tinggal
+        # Mess & Fasilitas
         elif any(k in msg for k in ['mess', 'mes', 'tinggal', 'makan', 'fasilitas', 'tidur', 'kos', 'kost', 'pp']):
             reply = (
                 "Halo Kak! 😊 Untuk **fasilitas karyawan** di Toko Buah ABS:\n\n"
@@ -50,9 +68,8 @@ def chat():
                 "🚗 **Sistem Kerja:** Boleh tinggal di mess atau PP (Pulang-Pergi).\n"
                 "☕ **Istirahat:** 2 jam per hari."
             )
-            return jsonify({'response': reply})
 
-        # 3. Pertanyaan Jam Kerja & Libur
+        # Jam Kerja & Libur
         elif any(k in msg for k in ['jam kerja', 'shift', 'libur', 'istirahat', 'sebulan', 'hari kerja']):
             reply = (
                 "Halo Kak! 😊 Ketentuan **jam & hari kerja** di Toko Buah ABS:\n\n"
@@ -61,9 +78,8 @@ def chat():
                 "☕ **Istirahat:** 2 jam sehari\n"
                 "🏖 **Libur:** 2 hari dalam sebulan"
             )
-            return jsonify({'response': reply})
 
-        # 4. Syarat / Kualifikasi Melamar
+        # Syarat Loker
         elif any(k in msg for k in ['syarat', 'kualifikasi', 'umur', 'usia', 'pria', 'laki', 'cewek', 'perempuan', 'ijazah']):
             reply = (
                 "Halo Kak! 😊 **Persyaratan melamar** di Toko Buah ABS Kepanjen:\n\n"
@@ -71,9 +87,8 @@ def chat():
                 "📋 **Syarat:** Memiliki KTP/KK, niat kerja, berpenampilan sopan, maksimal usia ±25 tahun.\n"
                 "🏠 Boleh tinggal di mess atau PP (Pulang-Pergi)."
             )
-            return jsonify({'response': reply})
 
-        # 5. Berkas & Cara Melamar
+        # Berkas & Cara Melamar
         elif any(k in msg for k in ['berkas', 'dokumen', 'cv', 'lamaran', 'kirim', 'cara melamar', 'panggilan']):
             reply = (
                 "Halo Kak! 😊 Panduan **berkas & cara melamar**:\n\n"
@@ -82,9 +97,8 @@ def chat():
                 "📍 **Lokasi Maps:** https://goo.gl/maps/sDB87wgjQrQ2\n"
                 "⏱ **Catatan:** Jika dalam 1-2 hari belum ada panggilan setelah kirim berkas, mohon maaf kemungkinan belum diterima."
             )
-            return jsonify({'response': reply})
 
-        # 6. Informasi Loker Umum
+        # Loker Umum
         elif any(k in msg for k in ['loker', 'lowongan', 'kerja', 'rekrutmen', 'posisi']):
             reply = (
                 "Halo Kak! 😊 Lowongan di Toko Buah ABS Kepanjen saat ini statusnya: **DIBUKA KEMBALI**.\n\n"
@@ -93,39 +107,40 @@ def chat():
                 "🛠 **Tugas:** Melayani pembeli, menata dagangan, dan kegiatan terkait toko.\n\n"
                 "Tanyakan spesifik seputar *gaji*, *mess*, *jam kerja*, atau *syarat berkas* yaa!"
             )
-            return jsonify({'response': reply})
 
-        # 7. Informasi Toko (Jam Buka, Lokasi, Parcel)
+        # Jam Buka Toko
         elif any(k in msg for k in ['buka', 'tutup', 'jam berapa', 'operasional']):
             reply = "Halo Kak! 😊 Toko Buah ABS Kepanjen buka setiap hari pukul 08.00 - 21.00 WIB. Silakan mampir! 🍎🍊"
-            return jsonify({'response': reply})
 
+        # Lokasi Toko
         elif any(k in msg for k in ['lokasi', 'alamat', 'dimana', 'maps', 'tempat']):
             reply = "Halo Kak! 😊 Toko Buah ABS beralamat di Kepanjen, Kabupaten Malang.\n\nGoogle Maps: https://goo.gl/maps/sDB87wgjQrQ2"
-            return jsonify({'response': reply})
 
+        # Parcel & Buah
         elif any(k in msg for k in ['parcel', 'parsel', 'buah', 'hantaran', 'besukan', 'stok']):
             reply = "Halo Kak! 😊 Toko Buah ABS menyediakan buah lokal & import segar serta melayani pembuatan Parcel Buah Custom (Ulang Tahun, Besukan, Hantaran, dll)."
-            return jsonify({'response': reply})
 
+        # Sapaan
         elif any(k in msg for k in ['halo', 'hai', 'pagi', 'siang', 'sore', 'malam', 'assalamualaikum', 'permisi']):
             reply = "Halo Kak/Bunda! 😊 Selamat datang di CS Online Toko Buah ABS Kepanjen. Ada yang bisa kami bantu seputar stok buah, parcel, jam buka, lokasi, atau info lowongan kerja?"
-            return jsonify({'response': reply})
 
-        # 8. Pencocokan Otomatis dari Isi File .TXT (Pencarian Teks Fleksibel)
+        # Fallback Search ke Memori RAM
         else:
-            # Mencari kalimat di file .txt yang relevan dengan pertanyaan
-            for line in knowledge_raw.split('\n'):
+            for line in KNOWLEDGE_CACHE.split('\n'):
                 if any(word in line.lower() for word in msg.split() if len(word) > 3):
-                    return jsonify({'response': f"Halo Kak! 😊 Berdasarkan catatan informasi toko:\n\n\"{line.strip()}\""})
+                    reply = f"Halo Kak! 😊 Berdasarkan catatan informasi toko:\n\n\"{line.strip()}\""
+                    break
+            if not reply:
+                reply = (
+                    "Mohon maaf ya Kak/Bunda 😊, CS AI Toko Buah ABS Kepanjen belum menemukan informasi tersebut.\n\n"
+                    "Silakan tanyakan seputar:\n"
+                    "• **Info Loker** (gaji, syarat, mess, jam kerja, berkas)\n"
+                    "• **Layanan Toko** (stok buah, parcel, jam buka, lokasi)"
+                )
 
-            reply = (
-                "Mohon maaf ya Kak/Bunda 😊, CS AI Toko Buah ABS Kepanjen belum menemukan informasi tersebut.\n\n"
-                "Silakan tanyakan seputar:\n"
-                "• **Info Loker** (gaji, syarat, mess, jam kerja, berkas)\n"
-                "• **Layanan Toko** (stok buah, parcel, jam buka, lokasi)"
-            )
-            return jsonify({'response': reply})
+        # Simpan hasil ke cache memori agar pertanyaan berikut yang sama bisa dijawab instan
+        RESPONSE_CACHE[msg] = reply
+        return jsonify({'response': reply})
 
     except Exception as e:
         return jsonify({'response': f'Terjadi kendala sistem: {str(e)}'}), 500
