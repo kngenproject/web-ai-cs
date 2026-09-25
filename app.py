@@ -107,7 +107,7 @@ def chat():
         )
 
         response = client.chat.completions.create(
-            model="nova-micro",
+            model="deepseek-chat",
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_msg}
