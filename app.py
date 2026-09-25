@@ -19,7 +19,7 @@ if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
     except Exception as e:
         print(f"Gagal inisialisasi Nexotao: {e}")
 
-# Jawaban Instan 0 Token untuk Sapaan Umum
+# 1. Jawaban Instan 0 Token untuk Sapaan Umum
 QUICK_REPLIES = {
     "halo": "Halo Kak! 😊 Ada yang bisa kami bantu seputar stok buah, parcel, lokasi, atau loker di Toko Buah ABS Kepanjen?",
     "hai": "Halo Kak! 😊 Selamat datang di Toko Buah ABS Kepanjen. Ada yang bisa dibantu?",
@@ -31,7 +31,7 @@ QUICK_REPLIES = {
     "tes": "Sistem CS AI Toko Buah ABS Kepanjen aktif dan siap membantu Kak! 😊"
 }
 
-# Fungsi Filter Dokumen Relevan (Dynamic Knowledge Retrieval)
+# 2. Dynamic Knowledge Retrieval (Filter Dokumen Relevan)
 def get_relevant_knowledge(user_msg):
     msg = user_msg.lower()
     target_files = []
@@ -81,6 +81,7 @@ def chat():
 
         msg_lower = user_msg.lower()
 
+        # Respon sapaan instan (0 Token)
         if msg_lower in QUICK_REPLIES:
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
@@ -91,7 +92,7 @@ def chat():
 
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
-        # SYSTEM PROMPT: Memaksa AI menjawab SANGAT SINGKAT dan LANGSUNG
+        # System Prompt Ringkas & Disiplin
         system_instruction = (
             "Kamu adalah CS Toko Buah ABS Kepanjen (panggil 'Kak').\n"
             "ATURAN UTAMA:\n"
@@ -110,7 +111,7 @@ def chat():
                 {"role": "user", "content": user_msg}
             ],
             temperature=0.2,
-            max_tokens=90  # Dipangkas agar balasan sangat singkat & super irit token
+            max_tokens=90
         )
 
         bot_reply = response.choices[0].message.content if response.choices else "Maaf Kak, AI belum bisa merespons saat ini."
