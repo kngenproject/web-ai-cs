@@ -88,7 +88,11 @@ def chat():
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
         # TEKNIK 0 TOKEN 2: Direct Paste untuk Permintaan Info Lengkap Loker
-        full_loker_triggers = ['info lengkap loker', 'infoloker lengkap', 'semua info loker', 'detail loker', 'syarat lengkap loker', 'minta info loker', 'info loker lengkap']
+        full_loker_triggers = [
+            'info lengkap loker', 'infoloker lengkap', 'semua info loker', 'detail loker', 
+            'syarat lengkap loker', 'minta info loker', 'info loker lengkap', 'info lengkap lowongan', 
+            'info lowongan', 'mana lokernya', 'dokumennya mana', 'yang mana'
+        ]
         if any(trigger in msg_lower for trigger in full_loker_triggers):
             loker_files = glob.glob("knowledge/*loker*.txt")
             if loker_files:
@@ -106,15 +110,16 @@ def chat():
 
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
-        # SYSTEM PROMPT: Menggunakan DeepSeek-V3-2 untuk Pertanyaan Spesifik Lainnya
+        # SYSTEM PROMPT: Menggunakan DeepSeek-V3-2 (Dilarang keras sebut 'dokumen pengetahuan' ke pelanggan)
         system_instruction = (
             "Kamu adalah CS Toko Buah ABS Kepanjen (panggil 'Kak').\n\n"
             "ATURAN RESPON:\n"
             "1. Jawab pertanyaan spesifik pelanggan secara singkat, padat, ramah, dan alami (1-2 kalimat pendek).\n"
-            "2. Semua FAKTA wajib 100% berdasarkan DOKUMEN PENGETAHUAN di bawah.\n\n"
-            "=== DOKUMEN PENGETAHUAN ===\n"
+            "2. Gunakan fakta dari data toko di bawah. DILARANG KERAS menyebutkan frasa 'dokumen pengetahuan', 'file', atau 'sistem' kepada pelanggan.\n"
+            "3. Jika pelanggan menanyakan detail/seluruh lowongan kerja, sampaikan poin utamanya langsung di pesan balasanmu.\n\n"
+            "=== DATA TOKO ===\n"
             f"{relevant_knowledge}\n"
-            "==========================="
+            "================="
         )
 
         response = client.chat.completions.create(
