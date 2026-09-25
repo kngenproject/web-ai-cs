@@ -18,7 +18,7 @@ if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
     except Exception as e:
         print(f"Gagal inisialisasi Nexotao: {e}")
 
-# 1. Quick Replies 0 Token
+# 1. Quick Replies 0 Token (Sapaan Umum)
 QUICK_REPLIES = {
     "halo": "Halo Kak! 😊 Ada yang bisa kami bantu seputar stok buah, parcel, lokasi, atau loker di Toko Buah ABS Kepanjen?",
     "hai": "Halo Kak! 😊 Selamat datang di Toko Buah ABS Kepanjen. Ada yang bisa dibantu?",
@@ -83,8 +83,21 @@ def chat():
 
         msg_lower = user_msg.lower()
 
+        # TEKNIK 0 TOKEN 1: Sapaan Ringan
         if msg_lower in QUICK_REPLIES:
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
+
+        # TEKNIK 0 TOKEN 2: Direct Paste untuk Info Lengkap Loker
+        full_loker_triggers = ['info lengkap loker', 'infoloker lengkap', 'semua info loker', 'detail loker', 'syarat lengkap loker', 'minta info loker']
+        if any(trigger in msg_lower for trigger in full_loker_triggers):
+            loker_files = glob.glob("knowledge/*loker*.txt")
+            if loker_files:
+                try:
+                    with open(loker_files[0], "r", encoding="utf-8") as f:
+                        loker_content = f.read().strip()
+                    return jsonify({'response': f"Halo Kak! 😊 Berikut informasi lengkap lowongan pekerjaan di Toko Buah ABS Kepanjen:\n\n{loker_content}"})
+                except Exception as e:
+                    print(f"Gagal membaca file loker: {e}")
 
         if not client:
             return jsonify({
@@ -93,18 +106,12 @@ def chat():
 
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
-        # Cek apakah pelanggan meminta info lengkap/semua info loker
-        is_full_info_request = any(k in msg_lower for k in ['lengkap', 'semua', 'detail', 'persyaratan lengkap'])
-        
-        # Atur kuota token dinamis: Jika minta info lengkap berikan 220 token, jika biasa 85 token
-        dynamic_max_tokens = 220 if is_full_info_request else 85
-
+        # SYSTEM PROMPT: Menggunakan DeepSeek-V3-2 untuk Pertanyaan Spesifik Lainnya
         system_instruction = (
             "Kamu adalah CS Toko Buah ABS Kepanjen (panggil 'Kak').\n\n"
             "ATURAN RESPON:\n"
-            "1. Jika pelanggan meminta INFO LENGKAP/SEMUA LOKER, berikan seluruh rincian (posisi, syarat, fasilitas mess, gaji/jam kerja, dan cara kirim berkas) secara tertata menggunakan poin-poin ringkas agar tidak terpotong.\n"
-            "2. Jika pertanyaan spesifik biasa, jawab singkat dan padat (1-2 kalimat).\n"
-            "3. Semua FAKTA wajib 100% dari DOKUMEN PENGETAHUAN.\n\n"
+            "1. Jawab pertanyaan spesifik pelanggan secara singkat, padat, dan ramah (1-2 kalimat pendek).\n"
+            "2. Semua FAKTA wajib 100% berdasarkan DOKUMEN PENGETAHUAN di bawah.\n\n"
             "=== DOKUMEN PENGETAHUAN ===\n"
             f"{relevant_knowledge}\n"
             "==========================="
@@ -117,7 +124,7 @@ def chat():
                 {"role": "user", "content": user_msg}
             ],
             temperature=0.3,
-            max_tokens=dynamic_max_tokens
+            max_tokens=85
         )
 
         bot_reply = response.choices[0].message.content if response.choices else "Maaf Kak, AI belum bisa merespons saat ini."
