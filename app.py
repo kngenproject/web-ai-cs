@@ -115,7 +115,7 @@ def chat():
 
         # Pemanggilan Model Nova Micro via Nexotao API
         response = client.chat.completions.create(
-            model="amazon.nova-micro-v1:0",
+            model="nova-micro",
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_msg}
