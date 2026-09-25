@@ -28,7 +28,7 @@ QUICK_REPLIES = {
     "selamat malam": "Selamat malam Kak! 😊 Ada yang bisa dibantu seputar Toko Buah ABS Kepanjen?",
     "selamat siang": "Selamat siang Kak! 😊 Ada yang bisa dibantu hari ini?",
     "selamat pagi": "Selamat pagi Kak! 😊 Ada yang bisa kami bantu?",
-    "terima kasih": "Sama-sama Kak! Ditunggu kedatangannya di Toko Buah ABS Kepanjen ya 😊",
+    "terima kasih": "Sama-sama Kak! Ditunggu kedatangan Anda di Toko Buah ABS Kepanjen ya 😊",
     "makasih": "Sama-sama Kak! Semoga sehat selalu 😊",
     "tes": "Sistem CS AI Toko Buah ABS Kepanjen aktif dan siap membantu Kak! 😊"
 }
@@ -110,16 +110,18 @@ def chat():
 
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
-        # SYSTEM PROMPT: Menggunakan DeepSeek-V3-2 (Dilarang keras sebut 'dokumen pengetahuan' ke pelanggan)
+        # SYSTEM PROMPT: Memandu Pemikiran AI Sebelum Menjawab
         system_instruction = (
-            "Kamu adalah CS Toko Buah ABS Kepanjen (panggil 'Kak').\n\n"
-            "ATURAN RESPON:\n"
-            "1. Jawab pertanyaan spesifik pelanggan secara singkat, padat, ramah, dan alami (1-2 kalimat pendek).\n"
-            "2. Gunakan fakta dari data toko di bawah. DILARANG KERAS menyebutkan frasa 'dokumen pengetahuan', 'file', atau 'sistem' kepada pelanggan.\n"
-            "3. Jika pelanggan menanyakan detail/seluruh lowongan kerja, sampaikan poin utamanya langsung di pesan balasanmu.\n\n"
-            "=== DATA TOKO ===\n"
+            "Kamu adalah Customer Service Toko Buah ABS Kepanjen (panggil pelanggan 'Kak').\n\n"
+            "PROSES BERPIKIR SEBELUM MENJAWAB:\n"
+            "1. Pahami pertanyaan pelanggan secara cermat.\n"
+            "2. Gunakan HANYA informasi nyata dari DATA TOKO di bawah.\n"
+            "3. Jawab langsung inti pertanyaannya dengan jelas, sopan, dan ramah (1-3 kalimat).\n"
+            "4. DILARANG KERAS menyuruh pelanggan membaca 'dokumen', 'file', atau 'sistem' di atas. Pelanggan TIDAK BISA melihat teks internal toko ini.\n"
+            "5. Jika fakta spesifik tidak ada di data, sampaikan maaf secara jujur dan sarankan hubungi admin/datang ke toko.\n\n"
+            "=== DATA TOKO ABS KEPANJEN ===\n"
             f"{relevant_knowledge}\n"
-            "================="
+            "=============================="
         )
 
         response = client.chat.completions.create(
@@ -129,7 +131,7 @@ def chat():
                 {"role": "user", "content": user_msg}
             ],
             temperature=0.3,
-            max_tokens=85
+            max_tokens=110  # Dinaikkan ke 110 token agar jawaban hasil penalaran utuh & tidak terpotong
         )
 
         bot_reply = response.choices[0].message.content if response.choices else "Maaf Kak, AI belum bisa merespons saat ini."
