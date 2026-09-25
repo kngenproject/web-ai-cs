@@ -7,6 +7,8 @@ app = Flask(__name__)
 
 NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
+MODEL = "deepseek-v3-2"
+
 client = None
 if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
     try:
@@ -132,14 +134,14 @@ PARTIAL_LOKER
 OTHER
 
 Pesan pelanggan:
-{message}
+{user_msg}
 """
 
         loker_intent = "OTHER"
 
         try:
             router_response = client.chat.completions.create(
-                model=MODEL,
+                model="deepseek-v3-2",
                 messages=[
                     {
                         "role": "system",
@@ -217,11 +219,7 @@ Jangan mengarang informasi yang tidak ada.
 Jika informasi tidak tersedia di loker.txt, katakan bahwa informasi
 tersebut belum tercantum dan arahkan pelanggan untuk menghubungi ABS.
 """
-                    message = (
-                        message
-                        + "\n\n"
-                        + loker_context
-                    )
+                    user_msg += "\n\n" + loker_context
 
             except Exception as e:
                 print(f"Gagal membaca loker.txt untuk konteks: {e}")
