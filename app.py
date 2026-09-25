@@ -33,7 +33,7 @@ QUICK_REPLIES = {
     "tes": "Sistem CS AI Toko Buah ABS Kepanjen aktif dan siap membantu Kak! 😊"
 }
 
-# 2. Dynamic Knowledge Retrieval (Hanya Ambil File Relevan)
+# 2. Dynamic Knowledge Retrieval
 def get_relevant_knowledge(user_msg):
     msg = user_msg.lower()
     target_files = []
@@ -48,7 +48,7 @@ def get_relevant_knowledge(user_msg):
         target_files.extend(glob.glob("knowledge/*jam*.txt"))
         target_files.extend(glob.glob("knowledge/*sosmed*.txt"))
 
-    produk_keywords = ['buah', 'parcel', 'stok', 'harga', 'parsel', 'paket', 'buah-buahan', 'ecer', 'grosir']
+    produk_keywords = ['buah', 'parcel', 'stok', 'harga', 'parsel', 'paket', 'buah-buahan', 'ecer', 'grosir', 'apel', 'jeruk', 'anggur', 'mangga']
     if any(k in msg for k in produk_keywords):
         target_files.extend(glob.glob("knowledge/*produk*.txt"))
         target_files.extend(glob.glob("knowledge/*parcel*.txt"))
@@ -83,7 +83,6 @@ def chat():
 
         msg_lower = user_msg.lower()
 
-        # Respon sapaan instan (0 Token)
         if msg_lower in QUICK_REPLIES:
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
@@ -94,15 +93,14 @@ def chat():
 
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
-        # SYSTEM PROMPT: Nyambung, Ramah, Fleksibel, tapi Tetap Irit & Faktual
+        # SYSTEM PROMPT: Paling Taktis, Ramah, Solutif, dan Tidak Mengambang
         system_instruction = (
-            "Kamu adalah CS Toko Buah ABS Kepanjen yang ramah dan alami (panggil 'Kak').\n\n"
-            "ATURAN RESPON:\n"
-            "1. Jawablah dengan kalimat yang LUWES, NYAMBUNG, dan KOMUNIKATIF sesuai pertanyaan pelanggan.\n"
-            "2. Gunakan sapaan netral seperti 'Halo Kak!' atau sesuaikan dengan sapaan pelanggan. Jangan kaku menyalin kata sapaan/salam dari dokumen.\n"
-            "3. Semua FAKTA INTI (alamat, jam buka, nominal gaji, syarat, isi paket) WAJIB 100% PERSIS dengan DOKUMEN PENGETAHUAN.\n"
-            "4. Jawab secara ringkas dan to the point (maksimal 2-3 kalimat pendek).\n"
-            "5. Jika informasi tidak ada di dokumen, sampaikan dengan ramah bahwa info tersebut belum tersedia di sistem.\n\n"
+            "Kamu adalah Customer Service Asisten Toko Buah ABS Kepanjen (panggil pelanggan 'Kak').\n\n"
+            "ATURAN MENJAWAB:\n"
+            "1. Jawablah secara RAMAH, EMPATIS, dan NATURAL. Jangan kaku dan jangan gunakan kalimat template berulang-ulang.\n"
+            "2. Gunakan FAKTA dari DOKUMEN PENGETAHUAN di bawah.\n"
+            "3. Jika daftar harga/stok spesifik TIDAK TERSEDIA di dokumen, minta maaf secara sopan dan langsung berikan nomor WA Admin/Toko (jika ada di dokumen) atau sarankan untuk cek langsung saat berkunjung agar mendapat info harga harian terupdate.\n"
+            "4. Jawab secara padat, jelas, tuntas, dan TIDAK TERPOTONG (maksimal 2-3 kalimat).\n\n"
             "=== DOKUMEN PENGETAHUAN ===\n"
             f"{relevant_knowledge}\n"
             "==========================="
@@ -114,8 +112,8 @@ def chat():
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_msg}
             ],
-            temperature=0.3, # Sedikit dinaikkan agar kalimat lebih mengalir alami
-            max_tokens=100   # Dibatasi 100 token agar tetap sangat hemat
+            temperature=0.3,
+            max_tokens=120  # Dinaikkan sedikit agar kalimat utuh dan tidak terpotong
         )
 
         bot_reply = response.choices[0].message.content if response.choices else "Maaf Kak, AI belum bisa merespons saat ini."
