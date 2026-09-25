@@ -8,7 +8,6 @@ app = Flask(__name__)
 # Mengambil API Key Nexotao dari Environment Variable Vercel / Lokal
 NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
-# Inisialisasi Client OpenAI / Nexotao
 client = None
 if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
     try:
@@ -19,13 +18,16 @@ if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
     except Exception as e:
         print(f"Gagal inisialisasi Nexotao: {e}")
 
-# 1. Jawaban Instan 0 Token untuk Sapaan Umum
+# 1. Jawaban Instan 0 Token untuk Sapaan Umum (Menggunakan sapaan ramah netral)
 QUICK_REPLIES = {
     "halo": "Halo Kak! 😊 Ada yang bisa kami bantu seputar stok buah, parcel, lokasi, atau loker di Toko Buah ABS Kepanjen?",
     "hai": "Halo Kak! 😊 Selamat datang di Toko Buah ABS Kepanjen. Ada yang bisa dibantu?",
     "hi": "Halo Kak! 😊 Ada yang bisa kami bantu hari ini?",
     "p": "Halo Kak! Ada yang bisa dibantu seputar Toko Buah ABS Kepanjen? 😊",
     "ping": "Halo Kak! Ada yang bisa dibantu? 😊",
+    "selamat malam": "Selamat malam Kak! 😊 Ada yang bisa dibantu seputar Toko Buah ABS Kepanjen?",
+    "selamat siang": "Selamat siang Kak! 😊 Ada yang bisa dibantu hari ini?",
+    "selamat pagi": "Selamat pagi Kak! 😊 Ada yang bisa kami bantu?",
     "terima kasih": "Sama-sama Kak! Ditunggu kedatangannya di Toko Buah ABS Kepanjen ya 😊",
     "makasih": "Sama-sama Kak! Semoga sehat selalu 😊",
     "tes": "Sistem CS AI Toko Buah ABS Kepanjen aktif dan siap membantu Kak! 😊"
@@ -92,16 +94,17 @@ def chat():
 
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
-        # System Prompt Ringkas & Disiplin
+        # System Prompt Ringkas, Disiplin, dan Sapaan Ramah
         system_instruction = (
-            "Kamu adalah CS Toko Buah ABS Kepanjen (panggil 'Kak').\n"
-            "ATURAN UTAMA:\n"
-            "1. Jawab HANYA berdasarkan dokumen di bawah secara SANGAT RINGKAS (maksimal 1-3 kalimat pendek/poin singkat).\n"
-            "2. Jangan bertele-tele, langsung ke inti jawaban.\n"
-            "3. Jika informasi tidak ada di dokumen, katakan singkat bahwa info tersebut belum tersedia.\n\n"
-            "=== DOKUMEN ===\n"
+            "Kamu adalah CS Toko Buah ABS Kepanjen (selalu panggil 'Kak').\n"
+            "ATURAN MENJAWAB:\n"
+            "1. Gunakan sapaan yang sesuai/netral (seperti 'Halo Kak!'). Jangan kaku menyalin kata 'Selamat siang/pagi' dari dokumen jika tidak relevan.\n"
+            "2. Ambil FAKTA INFORMASI (lokasi, jam buka, stok, syarat loker) HANYA dari DOKUMEN PENGETAHUAN di bawah.\n"
+            "3. Jawab secara SANGAT RINGKAS, jelas, dan to the point (maksimal 1-3 kalimat pendek).\n"
+            "4. Jika informasi tidak ada di dokumen, sampaikan dengan ramah bahwa info tersebut belum tersedia.\n\n"
+            "=== DOKUMEN PENGETAHUAN ===\n"
             f"{relevant_knowledge}\n"
-            "==============="
+            "==========================="
         )
 
         response = client.chat.completions.create(
