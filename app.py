@@ -107,7 +107,7 @@ def chat():
         )
 
         response = client.chat.completions.create(
-            model="deepseek-chat",
+            model="deepseek-v3",
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_msg}
