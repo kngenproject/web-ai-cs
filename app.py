@@ -1,14 +1,20 @@
 from flask import Flask, render_template, request, jsonify
-import json
+import os
+import glob
 
 app = Flask(__name__)
 
-def load_context():
-    try:
-        with open('context.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
-        return {}
+def load_all_knowledge():
+    """Membaca seluruh isi file .txt di folder knowledge/"""
+    combined_text = ""
+    txt_files = glob.glob("knowledge/*.txt")
+    for filepath in txt_files:
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                combined_text += f.read() + "\n\n"
+        except Exception as e:
+            print(f"Gagal membaca file {filepath}: {e}")
+    return combined_text.lower(), combined_text
 
 @app.route('/')
 def home():
@@ -23,104 +29,98 @@ def chat():
         if not msg:
             return jsonify({'response': 'Mohon tuliskan pertanyaan Kakak ya 😊'})
 
-        ctx = load_context()
-        loker = ctx.get('lowongan_kerja', {})
-        lokasi = ctx.get('lokasi', {})
-        jam_fasilitas = loker.get('jam_kerja_dan_fasilitas', {})
+        knowledge_lower, knowledge_raw = load_all_knowledge()
 
-        # --- 1. GAJI, UPAH, BONUS & KEUANGAN ---
-        if any(k in msg for k in ['gaji', 'upah', 'bayar', 'penghasilan', 'thr', 'bonus', 'sistem gaji', 'nominal', 'dapat berapa']):
+        # 1. Pertanyaan seputar Gaji / Upah
+        if any(k in msg for k in ['gaji', 'upah', 'bayar', 'penghasilan', 'thr', 'bonus', 'dapat berapa']):
             reply = (
-                f"Halo Kak! 😊 Mengenai **gaji dan hak keuangan** di {ctx.get('nama_toko', 'Toko Buah ABS Kepanjen')}, "
-                f"nominal resminya disesuaikan dengan posisi dan akan diinfokan secara transparan saat penyerahan berkas / wawancara langsung di toko yaa.\n\n"
-                f"🏠 **Fasilitas Gratis:** {jam_fasilitas.get('fasilitas', 'Makan & minum disediakan bagi yang tinggal di mess')}\n"
-                f"🕒 **Jam Kerja:** {jam_fasilitas.get('jam_kerja', '07.00 - 21.00 WIB')}\n\n"
-                f"Yuk kirimkan CV atau langsung datang bawa lamaran ke toko! 🍎"
+                "Halo Kak! 😊 Mengenai **gaji dan hak keuangan** di Toko Buah ABS Kepanjen, "
+                "nominal resminya disesuaikan dengan posisi dan disampaikan secara transparan saat wawancara / penyerahan berkas langsung di toko yaa.\n\n"
+                "🏠 **Fasilitas:** Makan & minum disediakan bagi yang tinggal di mess.\n"
+                "🕒 **Jam Kerja:** ±07.00 - ±21.00 WIB (Libur 2 hari/bulan, istirahat 2 jam/hari).\n\n"
+                "Yuk kirimkan CV atau langsung datang ke toko! 🍎"
             )
             return jsonify({'response': reply})
 
-        # --- 2. MESS, MAKAN, FASILITAS & TEMPAT TINGGAL ---
-        elif any(k in msg for k in ['mess', 'mes', 'tinggal', 'makan', 'fasilitas', 'tidur', 'kos', 'kost', 'pp', 'pulang pergi']):
+        # 2. Pertanyaan Mess / Makan / Tempat Tinggal
+        elif any(k in msg for k in ['mess', 'mes', 'tinggal', 'makan', 'fasilitas', 'tidur', 'kos', 'kost', 'pp']):
             reply = (
-                f"Halo Kak! 😊 Untuk **fasilitas karyawan** di {ctx.get('nama_toko')}:\n\n"
-                f"🏠 **Mess:** Disediakan bagi yang mau tinggal di tempat (gratis makan & minum).\n"
-                f"🚗 **Pilihan sistem:** Boleh tinggal di mess atau PP (Pulang-Pergi).\n"
-                f"⏰ **Istirahat:** Diberikan waktu istirahat 2 jam dalam sehari.\n\n"
-                f"Ada yang mau ditanyakan lagi terkait fasilitasnya, Kak?"
+                "Halo Kak! 😊 Untuk **fasilitas karyawan** di Toko Buah ABS:\n\n"
+                "🏠 **Mess:** Disediakan gratis bagi yang mau tinggal di tempat (termasuk makan & minum).\n"
+                "🚗 **Sistem Kerja:** Boleh tinggal di mess atau PP (Pulang-Pergi).\n"
+                "☕ **Istirahat:** 2 jam per hari."
             )
             return jsonify({'response': reply})
 
-        # --- 3. JAM KERJA, SHIFT, LIBUR & HARI KERJA ---
-        elif any(k in msg for k in ['jam', 'libur', 'shift', 'istirahat', 'sebulan', 'senin', 'minggu', 'hari kerja']):
+        # 3. Pertanyaan Jam Kerja & Libur
+        elif any(k in msg for k in ['jam kerja', 'shift', 'libur', 'istirahat', 'sebulan', 'hari kerja']):
             reply = (
-                f"Halo Kak! 😊 Ketentuan **jam & hari kerja** di Toko Buah ABS:\n\n"
-                f"🕒 **Jam Kerja:** {jam_fasilitas.get('jam_kerja', '±07.00 pagi - ±21.00 malam')}\n"
-                f"📅 **Hari Buka:** Senin sampai Minggu (Setiap hari)\n"
-                f"☕ **Istirahat:** 2 jam per hari\n"
-                f"🏖 **Jatah Libur:** 2 hari dalam sebulan"
+                "Halo Kak! 😊 Ketentuan **jam & hari kerja** di Toko Buah ABS:\n\n"
+                "🕒 **Jam Kerja:** ±07.00 - ±21.00 WIB\n"
+                "📅 **Hari Kerja:** Senin - Minggu (Toko buka setiap hari)\n"
+                "☕ **Istirahat:** 2 jam sehari\n"
+                "🏖 **Libur:** 2 hari dalam sebulan"
             )
             return jsonify({'response': reply})
 
-        # --- 4. SYARAT, UMUR, KHUSUS PEREMPUAN / PRIA ---
-        elif any(k in msg for k in ['syarat', 'kualifikasi', 'umur', 'usia', 'pria', 'laki', 'cewek', 'perempuan', 'ijazah', 'ktp', 'kk', 'pakaian', 'sopan']):
-            syarat_list = "\n- ".join(loker.get('persyaratan', []))
+        # 4. Syarat / Kualifikasi Melamar
+        elif any(k in msg for k in ['syarat', 'kualifikasi', 'umur', 'usia', 'pria', 'laki', 'cewek', 'perempuan', 'ijazah']):
             reply = (
-                f"Halo Kak! 😊 Berikut adalah **persyaratan utama** melamar di {ctx.get('nama_toko')}:\n\n"
-                f"👥 **Kuota Khusus:** {loker.get('kuota', '2 Karyawan Perempuan')}\n"
-                f"📋 **Persyaratan:**\n- {syarat_list}\n\n"
-                f"Jika memenuhi syarat di atas, Kakak bisa langsung bawa / kirimkan lamarannya yaa! 🍎"
+                "Halo Kak! 😊 **Persyaratan melamar** di Toko Buah ABS Kepanjen:\n\n"
+                "👥 **Kuota:** 2 Karyawan Perempuan\n"
+                "📋 **Syarat:** Memiliki KTP/KK, niat kerja, berpenampilan sopan, maksimal usia ±25 tahun.\n"
+                "🏠 Boleh tinggal di mess atau PP (Pulang-Pergi)."
             )
             return jsonify({'response': reply})
 
-        # --- 5. BERKAS, CARA MELAMAR & PANGGILAN TES ---
-        elif any(k in msg for k in ['berkas', 'dokumen', 'cv', 'lamaran', 'kirim', 'cara melamar', 'panggilan', 'diterima', 'wa', 'nomor']):
-            berkas_list = "\n- ".join(loker.get('berkas_lamaran', []))
+        # 5. Berkas & Cara Melamar
+        elif any(k in msg for k in ['berkas', 'dokumen', 'cv', 'lamaran', 'kirim', 'cara melamar', 'panggilan']):
             reply = (
-                f"Halo Kak! 😊 Berikut panduan **cara & berkas melamar**:\n\n"
-                f"📄 **Berkas yang Diperlukan:**\n- {berkas_list}\n\n"
-                f"📩 **Cara Kirim:**\n{loker.get('cara_melamar', '')}\n\n"
-                f"⏱ **Panggilan:** {loker.get('catatan_tambahan', '')}"
+                "Halo Kak! 😊 Panduan **berkas & cara melamar**:\n\n"
+                "📄 **Berkas Required:** Foto & data diri, riwayat pendidikan, pengalaman kerja (jika ada), Fc KTP/KK, Fc Ijazah terakhir.\n\n"
+                "📩 **Cara Kirim:** Kirim softfile via WA atau antar langsung ke Toko Buah ABS Kepanjen.\n"
+                "📍 **Lokasi Maps:** https://goo.gl/maps/sDB87wgjQrQ2\n"
+                "⏱ **Catatan:** Jika dalam 1-2 hari belum ada panggilan setelah kirim berkas, mohon maaf kemungkinan belum diterima."
             )
             return jsonify({'response': reply})
 
-        # --- 6. LOKER UMUM / MASIH DIBUKA KAH ---
-        elif any(k in msg for k in ['loker', 'lowongan', 'kerja', 'rekrutmen', 'posisi', 'tugas']):
+        # 6. Informasi Loker Umum
+        elif any(k in msg for k in ['loker', 'lowongan', 'kerja', 'rekrutmen', 'posisi']):
             reply = (
-                f"Halo Kak! 😊 Lowongan di {ctx.get('nama_toko')} saat ini statusnya: *{loker.get('status', 'DIBUKA')}*.\n\n"
-                f"📌 **Posisi:** {loker.get('posisi', 'Karyawan Toko')}\n"
-                f"👥 **Kuota:** {loker.get('kuota', '2 Karyawan Perempuan')}\n"
-                f"🛠 **Tugas:** Melayani pembeli, menata dagangan, dan kegiatan terkait toko.\n\n"
-                f"Kakak bisa tanyakan lebih spesifik seputar *gaji*, *mess/makan*, *jam kerja*, atau *syarat berkas* yaa!"
+                "Halo Kak! 😊 Lowongan di Toko Buah ABS Kepanjen saat ini statusnya: **DIBUKA KEMBALI**.\n\n"
+                "📌 **Posisi:** Karyawan Toko / Pramuniaga\n"
+                "👥 **Kuota:** 2 Karyawan Perempuan (Max usia ±25 tahun)\n"
+                "🛠 **Tugas:** Melayani pembeli, menata dagangan, dan kegiatan terkait toko.\n\n"
+                "Tanyakan spesifik seputar *gaji*, *mess*, *jam kerja*, atau *syarat berkas* yaa!"
             )
             return jsonify({'response': reply})
 
-        # --- 7. JAM BUKA TOKO (PELANGGAN) ---
-        elif any(k in msg for k in ['buka jam', 'tutup jam', 'operasional', 'jam berapa buka']):
-            reply = f"Halo Kak! 😊 {ctx.get('nama_toko')} buka {ctx.get('jam_operasional')}. Silakan mampir yaa! 🍎🍊"
+        # 7. Informasi Toko (Jam Buka, Lokasi, Parcel)
+        elif any(k in msg for k in ['buka', 'tutup', 'jam berapa', 'operasional']):
+            reply = "Halo Kak! 😊 Toko Buah ABS Kepanjen buka setiap hari pukul 08.00 - 21.00 WIB. Silakan mampir! 🍎🍊"
             return jsonify({'response': reply})
 
-        # --- 8. LOKASI & MAPS TOKO ---
-        elif any(k in msg for k in ['lokasi', 'alamat', 'dimana', 'maps', 'peta', 'tempat']):
-            alamat = lokasi.get('alamat', 'Kepanjen') if isinstance(lokasi, dict) else lokasi
-            maps = lokasi.get('maps', '') if isinstance(lokasi, dict) else ''
-            reply = f"Halo Kak! 😊 {ctx.get('nama_toko')} beralamat di {alamat}.\n\nGoogle Maps: {maps}"
+        elif any(k in msg for k in ['lokasi', 'alamat', 'dimana', 'maps', 'tempat']):
+            reply = "Halo Kak! 😊 Toko Buah ABS beralamat di Kepanjen, Kabupaten Malang.\n\nGoogle Maps: https://goo.gl/maps/sDB87wgjQrQ2"
             return jsonify({'response': reply})
 
-        # --- 9. PARCEL & BUAH ---
-        elif any(k in msg for k in ['parcel', 'parsel', 'buah', 'hantaran', 'besukan', 'stok', 'harga']):
-            layanan_list = "\n- ".join(ctx.get('produk_layanan', []))
-            reply = f"Halo Kak! 😊 {ctx.get('nama_toko')} menyediakan:\n- {layanan_list}\n\nBisa request isi parcel sesuai budget Kakak!"
+        elif any(k in msg for k in ['parcel', 'parsel', 'buah', 'hantaran', 'besukan', 'stok']):
+            reply = "Halo Kak! 😊 Toko Buah ABS menyediakan buah lokal & import segar serta melayani pembuatan Parcel Buah Custom (Ulang Tahun, Besukan, Hantaran, dll)."
             return jsonify({'response': reply})
 
-        # --- 10. SAPAAN RAMAH ---
         elif any(k in msg for k in ['halo', 'hai', 'pagi', 'siang', 'sore', 'malam', 'assalamualaikum', 'permisi']):
             reply = "Halo Kak/Bunda! 😊 Selamat datang di CS Online Toko Buah ABS Kepanjen. Ada yang bisa kami bantu seputar stok buah, parcel, jam buka, lokasi, atau info lowongan kerja?"
             return jsonify({'response': reply})
 
-        # --- 11. RESPONS JIKA TIDAK DIKENALI ---
+        # 8. Pencocokan Otomatis dari Isi File .TXT (Pencarian Teks Fleksibel)
         else:
+            # Mencari kalimat di file .txt yang relevan dengan pertanyaan
+            for line in knowledge_raw.split('\n'):
+                if any(word in line.lower() for word in msg.split() if len(word) > 3):
+                    return jsonify({'response': f"Halo Kak! 😊 Berdasarkan catatan informasi toko:\n\n\"{line.strip()}\""})
+
             reply = (
-                "Mohon maaf ya Kak/Bunda 😊, CS AI Toko Buah ABS Kepanjen belum memahami pertanyaan tersebut.\n\n"
+                "Mohon maaf ya Kak/Bunda 😊, CS AI Toko Buah ABS Kepanjen belum menemukan informasi tersebut.\n\n"
                 "Silakan tanyakan seputar:\n"
                 "• **Info Loker** (gaji, syarat, mess, jam kerja, berkas)\n"
                 "• **Layanan Toko** (stok buah, parcel, jam buka, lokasi)"
