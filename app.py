@@ -83,6 +83,7 @@ def chat():
 
         msg_lower = user_msg.lower()
 
+        # Respon sapaan instan (0 Token)
         if msg_lower in QUICK_REPLIES:
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
@@ -93,14 +94,13 @@ def chat():
 
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
-        # SYSTEM PROMPT: Paling Taktis, Ramah, Solutif, dan Tidak Mengambang
+        # SYSTEM PROMPT: Mengandalkan Penalaran DeepSeek-V3 untuk Jawaban Singkat, Tepat, dan Irit Token
         system_instruction = (
-            "Kamu adalah Customer Service Asisten Toko Buah ABS Kepanjen (panggil pelanggan 'Kak').\n\n"
-            "ATURAN MENJAWAB:\n"
-            "1. Jawablah secara RAMAH, EMPATIS, dan NATURAL. Jangan kaku dan jangan gunakan kalimat template berulang-ulang.\n"
-            "2. Gunakan FAKTA dari DOKUMEN PENGETAHUAN di bawah.\n"
-            "3. Jika daftar harga/stok spesifik TIDAK TERSEDIA di dokumen, minta maaf secara sopan dan langsung berikan nomor WA Admin/Toko (jika ada di dokumen) atau sarankan untuk cek langsung saat berkunjung agar mendapat info harga harian terupdate.\n"
-            "4. Jawab secara padat, jelas, tuntas, dan TIDAK TERPOTONG (maksimal 2-3 kalimat).\n\n"
+            "Kamu adalah CS Toko Buah ABS Kepanjen (panggil 'Kak').\n\n"
+            "ATURAN RESPON SUPER RINGKAS:\n"
+            "1. Jawablah langsung ke inti pertanyaan secara padat, ramah, dan alami (maksimal 1-2 kalimat pendek).\n"
+            "2. Gunakan fakta HANYA dari DOKUMEN PENGETAHUAN di bawah.\n"
+            "3. Jika info spesifik (seperti harga pasti) tidak ada di dokumen, sampaikan singkat untuk hubungi admin/datang ke toko.\n\n"
             "=== DOKUMEN PENGETAHUAN ===\n"
             f"{relevant_knowledge}\n"
             "==========================="
@@ -113,7 +113,7 @@ def chat():
                 {"role": "user", "content": user_msg}
             ],
             temperature=0.3,
-            max_tokens=120  # Dinaikkan sedikit agar kalimat utuh dan tidak terpotong
+            max_tokens=85  # Dibatasi 85 token agar balasan super pendek dan sangat irit
         )
 
         bot_reply = response.choices[0].message.content if response.choices else "Maaf Kak, AI belum bisa merespons saat ini."
