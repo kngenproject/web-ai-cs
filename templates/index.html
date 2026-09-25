@@ -35,21 +35,35 @@
         .chat-header {
             background: #2e7d32;
             color: white;
-            padding: 12px 15px;
+            padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-weight: bold;
-            font-size: 1.05rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             z-index: 10;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .header-brand img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #ffffff;
+            object-fit: cover;
         }
 
         .clear-btn {
             background: rgba(255, 255, 255, 0.2);
             color: white;
             border: none;
-            padding: 4px 10px;
+            padding: 5px 10px;
             border-radius: 12px;
             font-size: 0.75rem;
             cursor: pointer;
@@ -135,7 +149,10 @@
 
 <div class="chat-container">
     <div class="chat-header">
-        <span>🍎 CS Toko Buah ABS Kepanjen</span>
+        <div class="header-brand">
+            <img src="/static/logo/logo.png" alt="Logo Toko">
+            <span>CS Toko Buah ABS</span>
+        </div>
         <button class="clear-btn" id="clearBtn" title="Hapus Obrolan">Hapus Chat</button>
     </div>
 
@@ -160,7 +177,6 @@
     const STORAGE_KEY = 'abs_chat_history_v1';
     const DEFAULT_WELCOME = "Halo Kak! 😊 Selamat datang di Toko Buah ABS Kepanjen. Ada yang bisa kami bantu seputar stok buah, harga, paket parcel, lokasi, Instagram, atau informasi loker? 🍎🍊";
 
-    // 1. Muat riwayat chat saat halaman dibuka
     function loadChatHistory() {
         const savedHistory = localStorage.getItem(STORAGE_KEY);
         if (savedHistory) {
@@ -177,12 +193,9 @@
                 console.error("Gagal membaca history:", e);
             }
         }
-        
-        // Jika belum ada history, tampilkan pesan sambutan default
         appendMessageUI(DEFAULT_WELCOME, 'bot-message', true);
     }
 
-    // 2. Simpan pesan ke localStorage
     function saveMessageToStorage(text, className) {
         let messages = [];
         const savedHistory = localStorage.getItem(STORAGE_KEY);
@@ -197,7 +210,6 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
 
-    // 3. Tampilkan pesan ke layar
     function appendMessageUI(text, className, save = true) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${className}`;
@@ -210,7 +222,6 @@
         }
     }
 
-    // Event Submit Form
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const message = userInput.value.trim();
@@ -242,7 +253,6 @@
         }
     });
 
-    // Event Tombol Hapus Chat
     clearBtn.addEventListener('click', () => {
         if (confirm("Apakah Kakak yakin ingin menghapus semua riwayat percakapan?")) {
             localStorage.removeItem(STORAGE_KEY);
@@ -251,7 +261,6 @@
         }
     });
 
-    // Jalankan pemuatan riwayat saat pertama kali aplikasi dimuat
     loadChatHistory();
 </script>
 
