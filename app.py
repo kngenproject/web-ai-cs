@@ -140,6 +140,14 @@ Jawab HANYA 1 kata pilihan: FULL_LOKER / PARTIAL_LOKER / OTHER"""
             except Exception as e:
                 pass
 
+        # BILA PARTIAL_LOKER: Sertakan file loker.txt ke data konteks
+        if loker_intent == "PARTIAL_LOKER":
+            try:
+                with open("knowledge/loker.txt", "r", encoding="utf-8") as f:
+                    user_msg += f"\n\n[INFO LOKER RESMI]:\n{f.read().strip()}"
+            except Exception as e:
+                pass
+
         # BILA HANYA TANYA SPESIFIK ATAU LAINNYA
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
