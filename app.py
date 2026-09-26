@@ -8,8 +8,8 @@ app = Flask(__name__)
 
 NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
-# Model diganti ke Llama 3.3 70B
-MODEL = "llama-3.3-70b"
+# Menggunakan format ID model resmi Meta/Nexotao
+MODEL = "meta-llama/llama-3.3-70b-instruct"
 
 client = None
 if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
@@ -120,7 +120,6 @@ Pesan: {user_msg}"""
         except Exception as e:
             loker_intent = "OTHER"
 
-        # Kirim full teks loker.txt tanpa panggil AI penjelas (0 Token Output)
         if loker_intent == "LOKER":
             loker_path = "knowledge/loker.txt"
             try:
