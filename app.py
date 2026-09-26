@@ -8,8 +8,8 @@ app = Flask(__name__)
 
 NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
-# Menggunakan format ID model resmi Meta/Nexotao
-MODEL = "llama-3.3-70b-instruct"
+# Ganti ID Model Gemma 3 27B di sini
+MODEL = "gemma-3-27b"
 
 client = None
 if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
