@@ -8,7 +8,6 @@ app = Flask(__name__)
 
 NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
-# Ganti ID Model Gemma 3 27B di sini
 MODEL = "gemma-3-27b"
 
 client = None
@@ -90,13 +89,19 @@ def chat():
         if msg_lower in QUICK_REPLIES:
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
-        loker_router_prompt = f"""Tentukan intent pesan:
-LOKER: Tanya lowongan, syarat, gaji, posisi, jam kerja, atau cara melamar.
-OTHER: Lainnya.
+        if not client:
+            return jsonify({'response': 'Sistem AI belum aktif (API Key belum terpasang).'})
 
-Output HANYA 1 label: LOKER / OTHER.
+        # ANALISIS INTENT LOKER (AI Mikir Dulu)
+        loker_router_prompt = f"""Analisis maksud pertanyaan pelanggan berikut:
 
-Pesan: {user_msg}"""
+FULL_LOKER: Pelanggan meminta informasi lowongan kerja secara umum/keseluruhan/lengkap, atau bertanya apakah ada lowongan/loker.
+PARTIAL_LOKER: Pelanggan hanya menanyakan SATU hal spesifik tentang loker (misal: hanya tanya gaji, jam kerja, mess/tempat tinggal, umur, atau cara kirim berkas).
+OTHER: Bukan pertanyaan tentang lowongan kerja.
+
+Pesan: "{user_msg}"
+
+Jawab HANYA 1 kata pilihan: FULL_LOKER / PARTIAL_LOKER / OTHER"""
 
         loker_intent = "OTHER"
 
@@ -104,23 +109,24 @@ Pesan: {user_msg}"""
             router_response = client.chat.completions.create(
                 model=MODEL,
                 messages=[
-                    {"role": "system", "content": "Intent classifier. Output label saja."},
+                    {"role": "system", "content": "Kamu classifier intent. Output 1 kata saja."},
                     {"role": "user", "content": loker_router_prompt}
                 ],
                 temperature=0,
-                max_tokens=5
+                max_tokens=10
             )
 
             loker_intent_raw = router_response.choices[0].message.content.strip().upper()
             loker_intent = re.sub(r'[`\n\s]+', '', loker_intent_raw).strip()
 
-            if loker_intent not in {"LOKER", "OTHER"}:
+            if loker_intent not in {"FULL_LOKER", "PARTIAL_LOKER", "OTHER"}:
                 loker_intent = "OTHER"
 
         except Exception as e:
             loker_intent = "OTHER"
 
-        if loker_intent == "LOKER":
+        # BILA BUTUH INFO FULL: Berikan teks lengkap tanpa generasi ulang AI
+        if loker_intent == "FULL_LOKER":
             loker_path = "knowledge/loker.txt"
             try:
                 with open(loker_path, "r", encoding="utf-8") as f:
@@ -130,15 +136,13 @@ Pesan: {user_msg}"""
             except Exception as e:
                 pass
 
-        if not client:
-            return jsonify({'response': 'Sistem AI belum aktif (API Key belum terpasang).'})
-
+        # BILA HANYA TANYA SPESIFIK ATAU LAINNYA: Biarkan AI menjawab spesifik & hemat token
         relevant_knowledge = get_relevant_knowledge(user_msg)
 
         system_instruction = (
             "Kamu CS Toko Buah ABS Kepanjen (panggil 'Kak').\n"
             "ATURAN: Jawab SANGAT SINGKAT, PADAT, dan LANGSUNG KE POIN UTAMA (maksimal 1-2 kalimat). "
-            "Gunakan hanya data di bawah. Jangan berbelit-belit.\n\n"
+            "Jawab hanya apa yang ditanyakan pelanggan. Gunakan data di bawah.\n\n"
             f"DATA TOKO:\n{relevant_knowledge}"
         )
 
