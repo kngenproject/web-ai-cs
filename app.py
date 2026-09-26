@@ -90,11 +90,10 @@ def chat():
             return jsonify({'response': QUICK_REPLIES[msg_lower]})
 
         loker_router_prompt = f"""Tentukan intent pesan:
-FULL_LOKER: Minta info lowongan umum/lengkap.
-PARTIAL_LOKER: Tanya 1 syarat/gaji/posisi/jam kerja/cara melamar.
+LOKER: Tanya lowongan, syarat, gaji, posisi, jam kerja, atau cara melamar.
 OTHER: Lainnya.
 
-Output HANYA 1 label: FULL_LOKER / PARTIAL_LOKER / OTHER.
+Output HANYA 1 label: LOKER / OTHER.
 
 Pesan: {user_msg}"""
 
@@ -114,28 +113,20 @@ Pesan: {user_msg}"""
             loker_intent_raw = router_response.choices[0].message.content.strip().upper()
             loker_intent = re.sub(r'[`\n\s]+', '', loker_intent_raw).strip()
 
-            if loker_intent not in {"FULL_LOKER", "PARTIAL_LOKER", "OTHER"}:
+            if loker_intent not in {"LOKER", "OTHER"}:
                 loker_intent = "OTHER"
 
         except Exception as e:
             loker_intent = "OTHER"
 
-        if loker_intent == "FULL_LOKER":
+        # Kirim full teks loker.txt tanpa panggil AI penjelas (0 Token Output)
+        if loker_intent == "LOKER":
             loker_path = "knowledge/loker.txt"
             try:
                 with open(loker_path, "r", encoding="utf-8") as f:
                     loker_content = f.read().strip()
                 if loker_content:
                     return jsonify({"response": "Berikut info lowongan kerja Toko Buah ABS Kepanjen:\n\n" + loker_content})
-            except Exception as e:
-                pass
-
-        if loker_intent == "PARTIAL_LOKER":
-            try:
-                with open("knowledge/loker.txt", "r", encoding="utf-8") as f:
-                    loker_content = f.read().strip()
-                if loker_content:
-                    user_msg += f"\n\nINFO LOKER:\n{loker_content}"
             except Exception as e:
                 pass
 
