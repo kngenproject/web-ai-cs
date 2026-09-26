@@ -8,7 +8,8 @@ app = Flask(__name__)
 
 NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
-MODEL = "deepseek-v3-2"
+# Model diganti ke Gemma 3 27B
+MODEL = "gemma-3-27b"
 
 client = None
 if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
