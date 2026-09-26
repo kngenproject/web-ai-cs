@@ -8,8 +8,8 @@ app = Flask(__name__)
 
 NEXOTAO_API_KEY = os.environ.get("NEXOTAO_API_KEY", "MASUKKAN_API_KEY_NEXOTAO_DI_SINI")
 
-# Model diganti ke Gemma 3 27B
-MODEL = "gemma-3-27b"
+# Model diganti ke Llama 3.3 70B
+MODEL = "llama-3.3-70b"
 
 client = None
 if NEXOTAO_API_KEY and NEXOTAO_API_KEY != "MASUKKAN_API_KEY_NEXOTAO_DI_SINI":
